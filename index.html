@@ -3,59 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Face Analytics Pro</title>
+    <title>AI Face Scanner</title>
     <script defer src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.min.js"></script>
     <style>
         body { 
             margin: 0; 
-            background: #0a0a0a; 
-            color: #00e5ff; 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: #050505; 
+            color: #00ff95; 
+            font-family: 'Segoe UI', sans-serif; 
             display: flex; 
             flex-direction: column; 
             align-items: center; 
             justify-content: center;
             min-height: 100vh;
+            overflow: hidden;
         }
-        h1 { letter-spacing: 4px; text-transform: uppercase; margin-bottom: 10px; font-size: 1.5rem; }
-        .status-bar { margin-bottom: 20px; font-size: 0.9rem; color: #666; }
-        .status-bar.active { color: #00ff41; text-shadow: 0 0 5px #00ff41; }
+        h1 { text-transform: uppercase; letter-spacing: 5px; margin-bottom: 5px; }
+        #status { margin-bottom: 20px; color: #888; font-size: 0.8rem; }
         
-        .video-container { 
+        .scanner-container { 
             position: relative; 
-            border: 3px solid #333; 
-            border-radius: 20px; 
-            overflow: hidden; 
-            box-shadow: 0 0 30px rgba(0, 229, 255, 0.2);
+            border: 2px solid #333; 
+            border-radius: 12px; 
+            box-shadow: 0 0 40px rgba(0, 255, 149, 0.15);
             line-height: 0; 
         }
         canvas { position: absolute; top: 0; left: 0; }
-        video { background: #000; object-fit: cover; }
+        video { border-radius: 10px; background: #000; }
 
-        .data-panel {
-            margin-top: 20px;
-            padding: 15px 30px;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 50px;
-            border: 1px solid #333;
-            font-weight: bold;
-            min-width: 300px;
-            text-align: center;
+        .data-display {
+            margin-top: 25px;
+            padding: 15px 40px;
+            background: rgba(0, 255, 149, 0.05);
+            border: 1px solid #00ff95;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 1.1rem;
         }
-        #details { color: #fff; }
     </style>
 </head>
 <body>
 
-    <h1>Biometric Scanner</h1>
-    <div id="status" class="status-bar">INITIALIZING NEURAL NETS...</div>
+    <h1>Biometric AI</h1>
+    <div id="status">LOADING NEURAL NETWORKS...</div>
 
-    <div class="video-container">
+    <div class="scanner-container">
         <video id="video" width="640" height="480" autoplay muted></video>
     </div>
 
-    <div class="data-panel">
-        ANALYSIS: <span id="details">Waiting for face...</span>
+    <div class="data-display">
+        SCAN: <span id="details">Detecting...</span>
     </div>
 
     <script>
@@ -63,9 +60,10 @@
         const status = document.getElementById('status');
         const details = document.getElementById('details');
 
-        // Load models from your /models folder
-        async function loadModels() {
-            const MODEL_URL = './models';
+        // Nutze externe Modelle, damit kein 404 Fehler kommt
+        const MODEL_URL = 'https://raw.githubusercontent.com/vladmandic/face-api/master/model/';
+
+        async function init() {
             try {
                 await Promise.all([
                     faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
@@ -73,28 +71,28 @@
                     faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL),
                     faceapi.nets.ageGenderNet.loadFromUri(MODEL_URL)
                 ]);
-                startVideo();
-            } catch (err) {
-                status.innerText = "ERROR LOADING MODELS";
-                console.error(err);
+                startCamera();
+            } catch (e) {
+                status.innerText = "MODEL LOADING FAILED!";
+                console.error(e);
             }
         }
 
-        function startVideo() {
+        function startCamera() {
             navigator.mediaDevices.getUserMedia({ video: {} })
                 .then(stream => {
                     video.srcObject = stream;
-                    status.innerText = "SYSTEM ONLINE";
-                    status.classList.add('active');
+                    status.innerText = "SYSTEM ACTIVE";
+                    status.style.color = "#00ff95";
                 })
                 .catch(err => {
-                    status.innerText = "WEBCAM ACCESS DENIED";
+                    status.innerText = "CAMERA ACCESS DENIED";
                 });
         }
 
         video.addEventListener('play', () => {
             const canvas = faceapi.createCanvasFromMedia(video);
-            document.querySelector('.video-container').append(canvas);
+            document.querySelector('.scanner-container').append(canvas);
             
             const displaySize = { width: video.width, height: video.height };
             faceapi.matchDimensions(canvas, displaySize);
@@ -106,37 +104,30 @@
                     .withAgeAndGender();
 
                 const resizedDetections = faceapi.resizeResults(detections, displaySize);
-                
-                // Clear the canvas for the next frame
                 canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
                 
-                // Draw detection boxes and emotions
                 faceapi.draw.drawDetections(canvas, resizedDetections);
                 faceapi.draw.drawFaceExpressions(canvas, resizedDetections);
 
                 if (resizedDetections.length > 0) {
                     resizedDetections.forEach(result => {
                         const { age, gender, expressions } = result;
-                        
-                        // Find the strongest emotion
                         const emotion = Object.keys(expressions).reduce((a, b) => expressions[a] > expressions[b] ? a : b);
                         
-                        // Update Data Panel
-                        details.innerText = `${Math.round(age)} Y/O | ${gender.toUpperCase()} | EMOTION: ${emotion.toUpperCase()}`;
+                        // Text in der Box unter dem Video
+                        details.innerText = `${Math.round(age)}Y | ${gender.toUpperCase()} | ${emotion.toUpperCase()}`;
 
-                        // Draw Age/Gender text directly on video
+                        // Text direkt am Gesicht
                         new faceapi.draw.DrawTextField(
                             [`${Math.round(age)} years`, gender],
-                            result.detection.box.topRight
+                            result.detection.box.bottomLeft
                         ).draw(canvas);
                     });
-                } else {
-                    details.innerText = "Searching...";
                 }
             }, 100);
         });
 
-        loadModels();
+        init();
     </script>
 </body>
 </html>
