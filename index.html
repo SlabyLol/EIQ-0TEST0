@@ -1,73 +1,158 @@
-<script>
-    const video = document.getElementById('video');
-    const status = document.getElementById('status');
-    const dataDisplay = document.getElementById('data-display');
-
-    // Dynamischer Pfad für GitHub Pages
-    const repoName = window.location.pathname.split('/')[1];
-    const MODEL_URL = window.location.hostname.includes('github.io') 
-        ? `/${repoName}/weights/` 
-        : './weights/';
-
-    async function start() {
-        try {
-            status.innerText = "LOADING MODELS...";
-            await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
-            await faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL);
-            await faceapi.nets.ageGenderNet.loadFromUri(MODEL_URL);
-            
-            status.innerText = "SYSTEM ONLINE";
-            status.style.color = "#00ff00";
-
-            // Kamera-Stream anfordern
-            const stream = await navigator.mediaDevices.getUserMedia({ 
-                video: { 
-                    facingMode: "user",
-                    width: { ideal: 640 },
-                    height: { ideal: 480 }
-                } 
-            });
-            
-            video.srcObject = stream;
-            
-            // WICHTIG: Sicherstellen, dass das Video wirklich startet
-            video.onloadedmetadata = () => {
-                video.play();
-                dataDisplay.innerText = "CAMERA FEED ACTIVE - SCANNING...";
-            };
-
-        } catch (err) {
-            status.innerText = "FATAL ERROR";
-            dataDisplay.innerText = "Camera or Path Error: " + err.name;
-            console.error(err);
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>DarkFox AI Scanner</title>
+    <script src="dist/face-api.min.js"></script>
+    <style>
+        :root { --primary: #ff4d00; --bg: #000000; }
+        
+        body { 
+            margin: 0; 
+            background: var(--bg); 
+            color: white; 
+            font-family: 'Courier New', monospace; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            min-height: 100vh;
         }
-    }
 
-    video.addEventListener('play', () => {
-        // Overlay erstellen
-        const canvas = faceapi.createCanvasFromMedia(video);
-        document.getElementById('wrapper').append(canvas);
-        const displaySize = { width: video.width, height: video.height };
-        faceapi.matchDimensions(canvas, displaySize);
+        .header { margin-bottom: 15px; text-align: center; }
+        .header h1 { color: var(--primary); letter-spacing: 5px; margin: 0; font-size: 1.5rem; }
 
-        setInterval(async () => {
-            const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions())
-                .withFaceExpressions()
-                .withAgeAndGender();
+        .viewfinder { 
+            position: relative; 
+            width: 640px; 
+            height: 480px; 
+            background: #111;
+            border: 2px solid #333;
+            box-shadow: 0 0 20px rgba(255, 77, 0, 0.2);
+            overflow: hidden;
+        }
 
-            const resized = faceapi.resizeResults(detections, displaySize);
-            canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
-            
-            // Zeichne die Boxen
-            faceapi.draw.drawDetections(canvas, resized);
+        /* Verhindert, dass das Video weiß oder unsichtbar bleibt */
+        video { 
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 1;
+        }
 
-            if (resized.length > 0) {
-                const { age, gender, expressions } = resized[0];
-                const emotion = Object.keys(expressions).reduce((a, b) => expressions[a] > expressions[b] ? a : b);
-                dataDisplay.innerHTML = `<span style="color:#ff4d00">> TARGET:</span> ${gender.toUpperCase()} | ${Math.round(age)} YRS | ${emotion.toUpperCase()}`;
+        canvas { 
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2; /* Zeichnet über dem Video */
+        }
+
+        .terminal { 
+            margin-top: 20px; 
+            width: 620px; 
+            padding: 15px; 
+            background: #0a0a0a; 
+            border-left: 3px solid var(--primary);
+            font-size: 0.85rem;
+            min-height: 50px;
+        }
+
+        .label { color: var(--primary); }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>DARKFOX AI</h1>
+        <div id="status" style="font-size: 0.7rem; color: #555;">BOOTING...</div>
+    </div>
+    
+    <div class="viewfinder" id="wrapper">
+        <video id="video" autoplay muted playsinline webkit-playsinline></video>
+    </div>
+
+    <div class="terminal">
+        <div id="data-display">> INITIALIZING BIO-METRIC SCANNER...</div>
+    </div>
+
+    <script>
+        const video = document.getElementById('video');
+        const status = document.getElementById('status');
+        const dataDisplay = document.getElementById('data-display');
+
+        // Pfad-Logik für GitHub Pages
+        const repoName = window.location.pathname.split('/')[1];
+        const MODEL_URL = window.location.hostname.includes('github.io') 
+            ? `/${repoName}/weights/` 
+            : './weights/';
+
+        async function startScanner() {
+            try {
+                status.innerText = "LOADING NEURAL NETWORKS...";
+                
+                // Laden der Modelle
+                await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+                await faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL);
+                await faceapi.nets.ageGenderNet.loadFromUri(MODEL_URL);
+                
+                status.innerText = "SYSTEM ONLINE";
+                status.style.color = "#00ff00";
+
+                // Kamera Zugriff
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: "user" } 
+                });
+                video.srcObject = stream;
+                
+                // Erzwungener Start für Safari
+                video.play();
+                
+            } catch (err) {
+                status.innerText = "CRITICAL ERROR";
+                status.style.color = "red";
+                dataDisplay.innerText = "> ERROR: " + err.message;
             }
-        }, 200);
-    });
+        }
 
-    start();
-</script>
+        video.addEventListener('play', () => {
+            const canvas = faceapi.createCanvasFromMedia(video);
+            document.getElementById('wrapper').append(canvas);
+            
+            const displaySize = { width: 640, height: 480 };
+            faceapi.matchDimensions(canvas, displaySize);
+
+            setInterval(async () => {
+                const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions())
+                    .withFaceExpressions()
+                    .withAgeAndGender();
+
+                const resized = faceapi.resizeResults(detections, displaySize);
+                
+                // Canvas leeren
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Ergebnisse zeichnen
+                faceapi.draw.drawDetections(canvas, resized);
+                faceapi.draw.drawFaceExpressions(canvas, resized);
+
+                if (resized.length > 0) {
+                    const { age, gender, expressions } = resized[0];
+                    const emotion = Object.keys(expressions).reduce((a, b) => expressions[a] > expressions[b] ? a : b);
+                    dataDisplay.innerHTML = `<span class="label">> SCAN:</span> ${gender.toUpperCase()} | ~${Math.round(age)} YRS | ${emotion.toUpperCase()}`;
+                } else {
+                    dataDisplay.innerHTML = `<span class="label">> SCANNING...</span> NO TARGET FOUND`;
+                }
+            }, 150);
+        });
+
+        startScanner();
+    </script>
+</body>
+</html>
