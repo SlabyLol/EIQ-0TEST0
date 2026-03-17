@@ -3,28 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DarkFox AI - Fix Edition</title>
+    <title>DarkFox AI Scanner</title>
     <script defer src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.min.js"></script>
     <style>
         :root { --primary: #ff4d00; --bg: #0a0b10; }
         body { margin: 0; background: var(--bg); color: white; font-family: 'Courier New', monospace; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; }
-        .viewfinder { position: relative; border: 2px solid #30363d; background: #000; line-height: 0; }
+        .viewfinder { position: relative; border: 2px solid #30363d; background: #000; line-height: 0; box-shadow: 0 0 20px rgba(255, 77, 0, 0.2); }
         canvas { position: absolute; top: 0; left: 0; }
-        .terminal { margin-top: 20px; width: 640px; padding: 15px; background: #161b22; border-left: 3px solid var(--primary); }
-        .label { color: var(--primary); }
+        .terminal { margin-top: 20px; width: 640px; padding: 15px; background: #161b22; border-left: 3px solid var(--primary); font-size: 0.9rem; }
+        .label { color: var(--primary); font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <h1 style="color:var(--primary); letter-spacing: 5px;">DARKFOX AI</h1>
+    <h1 style="color:var(--primary); letter-spacing: 5px; margin-bottom: 10px;">DARKFOX AI</h1>
+    <p style="font-size: 0.7rem; color: #58a6ff; margin-bottom: 20px;">SYSTEM STATUS: <span id="status">INITIATING...</span></p>
     
     <div class="viewfinder">
         <video id="video" width="640" height="480" autoplay muted></video>
     </div>
 
     <div class="terminal">
-        <span class="label">> SYSTEM:</span> <span id="status">INITIATING...</span><br>
-        <div id="data-display">LOADING NEURAL WEIGHTS...</div>
+        <div id="data-display">SYSTEM STARTUP...</div>
     </div>
 
     <script>
@@ -32,20 +32,12 @@
         const status = document.getElementById('status');
         const dataDisplay = document.getElementById('data-display');
 
-        // Diese Funktion findet den richtigen Pfad zu deinem /weights Ordner
-        function getModelPath() {
-            const path = window.location.pathname;
-            if (path.includes('AIFaceScanner')) {
-                return '/AIFaceScanner/weights'; // Für GitHub Pages
-            }
-            return './weights'; // Für lokales Testen
-        }
+        // Wir nutzen ein externes Model-Repo, das garantiert funktioniert:
+        const MODEL_URL = 'https://raw.githubusercontent.com/vladmandic/face-api/master/model/';
 
         async function init() {
-            const MODEL_URL = getModelPath();
-            console.log("Loading models from:", MODEL_URL);
-
             try {
+                // Modelle laden
                 await Promise.all([
                     faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
                     faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
@@ -55,20 +47,16 @@
                 
                 status.innerText = "ONLINE";
                 status.style.color = "#00ff00";
-                dataDisplay.innerText = "WEIGHTS LOADED. STARTING CAMERA...";
-                startCamera();
+                dataDisplay.innerText = "NEURAL WEIGHTS SYNCED. STARTING FEED...";
+                
+                const stream = await navigator.mediaDevices.getUserMedia({ video: {} });
+                video.srcObject = stream;
             } catch (err) {
-                status.innerText = "ERROR LOADING WEIGHTS";
+                status.innerText = "SYNC ERROR";
                 status.style.color = "red";
-                dataDisplay.innerHTML = "Check if folder <b>/weights</b> exists in your repo and contains .json and .shard1 files.";
+                dataDisplay.innerText = "FAILED TO CONNECT TO NEURAL NETWORKS.";
                 console.error(err);
             }
-        }
-
-        function startCamera() {
-            navigator.mediaDevices.getUserMedia({ video: {} })
-                .then(stream => { video.srcObject = stream; })
-                .catch(() => { status.innerText = "CAMERA ACCESS DENIED"; });
         }
 
         video.addEventListener('play', () => {
@@ -86,13 +74,16 @@
                 const resized = faceapi.resizeResults(detections, displaySize);
                 canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
                 
+                // Zeichnen der Boxen und Emotionen
                 faceapi.draw.drawDetections(canvas, resized);
                 faceapi.draw.drawFaceExpressions(canvas, resized);
 
                 if (resized.length > 0) {
                     const { age, gender, expressions } = resized[0];
                     const emotion = Object.keys(expressions).reduce((a, b) => expressions[a] > expressions[b] ? a : b);
-                    dataDisplay.innerHTML = `> TARGET: ${gender.toUpperCase()} | AGE: ${Math.round(age)} | MOOD: ${emotion.toUpperCase()}`;
+                    dataDisplay.innerHTML = `<span class="label">> TARGET DETECTED</span><br>GENDER: ${gender.toUpperCase()} | AGE: ${Math.round(age)} | MOOD: ${emotion.toUpperCase()}`;
+                } else {
+                    dataDisplay.innerHTML = `<span class="label">> SCANNING...</span> NO TARGET IN RANGE`;
                 }
             }, 100);
         });
