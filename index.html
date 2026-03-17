@@ -3,15 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DarkFox AI - Terminal</title>
-    <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
+    <title>DarkFox AI - Local Fix</title>
+    <script src="dist/face-api.min.js"></script>
     <style>
         :root { --primary: #ff4d00; --bg: #0a0b10; }
         body { margin: 0; background: var(--bg); color: white; font-family: 'Courier New', monospace; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; }
-        .viewfinder { position: relative; border: 2px solid #30363d; background: #000; line-height: 0; }
-        canvas { position: absolute; top: 0; left: 0; z-index: 10; }
-        video { position: relative; z-index: 5; }
-        .terminal { margin-top: 20px; width: 600px; padding: 15px; background: #161b22; border-left: 3px solid var(--primary); font-size: 0.8rem; }
+        .viewfinder { position: relative; border: 2px solid #30363d; background: #000; overflow: hidden; line-height: 0; }
+        canvas { position: absolute; top: 0; left: 0; }
+        .terminal { margin-top: 20px; width: 600px; padding: 15px; background: #161b22; border-left: 3px solid var(--primary); }
         .label { color: var(--primary); }
     </style>
 </head>
@@ -24,8 +23,8 @@
     </div>
 
     <div class="terminal">
-        <span class="label">> SYSTEM:</span> <span id="status">CONNECTING...</span><br>
-        <div id="data-display">INITIALIZING...</div>
+        <span class="label">> SYSTEM:</span> <span id="status">LOCAL BOOT...</span><br>
+        <div id="data-display">LOADING FROM REPOSITORY...</div>
     </div>
 
     <script>
@@ -33,27 +32,37 @@
         const status = document.getElementById('status');
         const dataDisplay = document.getElementById('data-display');
 
-        // Wir versuchen es mit einer URL, die direkt von GitHub kommt
-        const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/weights/';
+        // Wir bauen den Pfad dynamisch basierend auf deiner URL
+        const repoName = window.location.pathname.split('/')[1];
+        const MODEL_URL = `/${repoName}/weights/`; 
 
         async function start() {
             try {
-                status.innerText = "LOADING MODELS...";
+                status.innerText = "ACCESSING /weights/...";
                 
-                // Wir laden nur die wichtigsten 3 Modelle für bessere Stabilität
+                // Wir laden die Modelle einzeln aus deinem Repo
                 await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
                 await faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL);
                 await faceapi.nets.ageGenderNet.loadFromUri(MODEL_URL);
                 
-                status.innerText = "MODELS READY";
+                status.innerText = "SYSTEM ONLINE";
+                status.style.color = "#00ff00";
                 
                 const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: "user", width: 640 } 
+                    video: { facingMode: "user" } 
                 });
                 video.srcObject = stream;
             } catch (err) {
-                status.innerText = "FATAL ERROR";
-                dataDisplay.innerText = "Details: " + err.message;
+                status.innerText = "PATH ERROR";
+                // Falls der dynamische Pfad scheitert, versuchen wir den absoluten Standardpfad
+                if (status.innerText === "PATH ERROR") {
+                    try {
+                        await faceapi.nets.tinyFaceDetector.loadFromUri('./weights');
+                        status.innerText = "SYSTEM ONLINE (ALT)";
+                    } catch (e) {
+                        dataDisplay.innerHTML = "FAILED AT: " + MODEL_URL + "<br>Check if folder 'weights' is in your main directory.";
+                    }
+                }
                 console.error(err);
             }
         }
@@ -71,13 +80,12 @@
 
                 const resized = faceapi.resizeResults(detections, displaySize);
                 canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
-                
                 faceapi.draw.drawDetections(canvas, resized);
 
                 if (resized.length > 0) {
                     const { age, gender, expressions } = resized[0];
                     const emotion = Object.keys(expressions).reduce((a, b) => expressions[a] > expressions[b] ? a : b);
-                    dataDisplay.innerHTML = `> SCAN: ${gender.toUpperCase()} | ${Math.round(age)} YRS | MOOD: ${emotion.toUpperCase()}`;
+                    dataDisplay.innerHTML = `> SCAN: ${gender.toUpperCase()} | ${Math.round(age)} YRS | ${emotion.toUpperCase()}`;
                 }
             }, 200);
         });
