@@ -1,4 +1,23 @@
 --- DARKFOX AI - SYSTEM UPDATE LOG [2026.03.18] ---
+> VERSION: 5.0 "GLOBAL MASTER"
+> STATUS: STABLE
+
+[NEW FEATURES]
+- BUG REPORT: Full modal form integrated with SMTP routing.
+- EMAIL VALIDATION: Internal Regex check for bug report contacts.
+- DESTINATION: darkfox.tobias@outlook.com assigned as primary inbox.
+- SCROLLING: Advanced CSS scrollbar for external log data.
+
+[OPTIMIZATIONS]
+- FULL ENGLISH: All scripts, UI tags, and terminal outputs unified to English.
+- MESH ALIGNMENT: Fixed landmark displacement bug during face rotation.
+- CODE REFACTOR: Reduced DOM overhead for better frame rates on mobile.
+
+[SYSTEM NOTES]
+- Ensure your 'weights' folder is populated with all .json and .bin files.
+--------------------------------------------------
+
+--- DARKFOX AI - SYSTEM UPDATE LOG [2026.03.18] ---
 > VERSION: 4.8 "UNIFIED INTERFACE"
 > STATUS: OPERATIONAL
 
