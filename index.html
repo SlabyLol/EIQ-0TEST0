@@ -3,68 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DarkFox AI - Complete Fix IDk</title>
+    <title>DarkFox AI - Deep Scan Fix</title>
     <script src="dist/face-api.min.js"></script>
     <style>
         :root { --accent: #5efcff; --bg: #04080d; --panel: #0b141d; --border: #1a2f3f; --text: #e2f8ff; --warning: #ff4d00; }
-        * { box-sizing: border-box; }
-        body { 
-            margin: 0; background: var(--bg); color: var(--text); 
-            font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: column; 
-            align-items: center; justify-content: center; min-height: 100vh; overflow-x: hidden;
-        }
-
+        body { margin: 0; background: var(--bg); color: var(--text); font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; }
         .main-container { width: 95vw; max-width: 720px; display: flex; flex-direction: column; gap: 10px; }
-
-        .viewport { 
-            position: relative; width: 100%; aspect-ratio: 4/3;
-            background: #000; border-radius: 12px; overflow: hidden; border: 2px solid var(--border);
-            box-shadow: 0 0 40px rgba(94, 252, 255, 0.15);
-        }
+        .viewport { position: relative; width: 100%; aspect-ratio: 4/3; background: #000; border-radius: 12px; overflow: hidden; border: 2px solid var(--border); }
         video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-        canvas { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 5; pointer-events: none; }
-
-        .badge {
-            position: absolute; z-index: 20; background: rgba(0,0,0,0.85); 
-            padding: 6px 14px; border-radius: 4px; font-size: 11px; 
-            border: 1px solid var(--accent); color: var(--accent); font-weight: 900;
-        }
-        #mode-display { top: 15px; left: 15px; }
-        #target-count { top: 15px; right: 15px; color: var(--warning); border-color: var(--warning); }
-
-        #overlay {
-            position: absolute; inset: 0; background: var(--bg);
-            display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 50;
-        }
-        .boot-logo { width: 150px; height: 150px; border-radius: 50%; box-shadow: 0 0 30px var(--accent); margin-bottom: 25px; }
-        
-        .btn {
-            padding: 10px 18px; background: transparent; color: var(--accent);
-            border: 1px solid var(--accent); border-radius: 4px; font-weight: 800; cursor: pointer;
-            text-transform: uppercase; letter-spacing: 1px; font-size: 11px; transition: 0.2s;
-        }
-        .btn:hover { background: var(--accent); color: #000; }
-        .active-fx { background: var(--accent) !important; color: #000 !important; }
-
-        .data-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
-        .data-card { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 12px; text-align: center; }
-        .label-tag { font-size: 9px; color: var(--accent); font-weight: bold; opacity: 0.8; }
-        .label-val { font-size: 14px; font-family: monospace; font-weight: 900; display: block; margin-top: 4px; }
-
-        .controls-row { display: flex; gap: 8px; justify-content: center; }
-
-        .console { 
-            background: #010409; border-radius: 8px; padding: 10px; height: 115px; 
-            overflow-y: auto; font-family: 'Consolas', monospace; font-size: 10px; 
-            border: 1px solid var(--border); color: #888;
-        }
-        .log-load { color: var(--accent); }
-        .log-error { color: #ff4d4d; }
-
-        #bar-container { width: 220px; height: 4px; background: #111; margin-top: 15px; border-radius: 2px; overflow: hidden; }
-        #bar { width: 0%; height: 100%; background: var(--accent); transition: width 0.3s; }
-
-        .copyright { font-size: 10px; color: #334155; text-align: center; margin-top: 5px; font-weight: bold; }
+        canvas { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 10; pointer-events: none; }
+        .badge { position: absolute; z-index: 20; background: rgba(0,0,0,0.8); padding: 5px 10px; border-radius: 4px; font-size: 10px; border: 1px solid var(--accent); color: var(--accent); font-weight: bold; }
+        #mode-display { top: 10px; left: 10px; }
+        #target-count { top: 10px; right: 10px; color: var(--warning); border-color: var(--warning); }
+        #overlay { position: absolute; inset: 0; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 50; }
+        .boot-logo { width: 120px; border-radius: 50%; margin-bottom: 20px; box-shadow: 0 0 20px var(--accent); }
+        .btn { padding: 10px 20px; background: transparent; color: var(--accent); border: 1px solid var(--accent); cursor: pointer; text-transform: uppercase; font-size: 11px; }
+        .data-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+        .data-card { background: var(--panel); border: 1px solid var(--border); padding: 10px; text-align: center; border-radius: 8px; }
+        .label-tag { font-size: 9px; color: var(--accent); display: block; }
+        .label-val { font-size: 14px; font-weight: bold; font-family: monospace; }
+        .console { background: #000; padding: 10px; height: 80px; font-size: 10px; color: #666; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; font-family: monospace; }
         input[type="file"] { display: none; }
     </style>
 </head>
@@ -72,140 +30,107 @@
 
     <div class="main-container">
         <div class="viewport" id="wrapper">
-            <div class="badge" id="mode-display">SYSTEM: STANDBY</div>
+            <div class="badge" id="mode-display">OFFLINE</div>
             <div class="badge" id="target-count">TARGETS: 0</div>
             
             <div id="overlay">
                 <img src="IMG_0643.jpeg" class="boot-logo">
-                <div id="ui-actions" style="display:flex; gap:10px;">
-                    <button class="btn" onclick="bootSystem('camera')">Live Mode</button>
-                    <label class="btn" for="video-upload">Import mp4/mov</label>
+                <div style="display:flex; gap:10px;">
+                    <button class="btn" onclick="boot('camera')">Live</button>
+                    <label class="btn" for="video-upload">Import</label>
                 </div>
-                <input type="file" id="video-upload" accept="video/*" onchange="bootSystem('import')">
-                
-                <div id="loader" style="display:none; text-align:center;">
-                    <div id="status" style="font-size:10px; color:var(--accent); font-weight:bold;">INITIALIZING NEURAL NETWORK...</div>
-                    <div id="bar-container"><div id="bar"></div></div>
-                </div>
+                <input type="file" id="video-upload" accept="video/*" onchange="boot('import')">
+                <div id="status" style="margin-top:15px; font-size:10px; color:var(--accent);">AWAITING COMMAND...</div>
             </div>
             <video id="video" muted playsinline loop></video>
         </div>
 
         <div class="data-grid">
-            <div class="data-card"><span class="label-tag">PRIMARY SEX</span><span id="val-g" class="label-val">--</span></div>
-            <div class="data-card"><span class="label-tag">PRIMARY AGE</span><span id="val-a" class="label-val">--</span></div>
-            <div class="data-card"><span class="label-tag">PRIMARY MOOD</span><span id="val-e" class="label-val">--</span></div>
+            <div class="data-card"><span class="label-tag">SEX</span><span id="val-g" class="label-val">--</span></div>
+            <div class="data-card"><span class="label-tag">AGE</span><span id="val-a" class="label-val">--</span></div>
+            <div class="data-card"><span class="label-tag">EMOTION</span><span id="val-e" class="label-val">--</span></div>
         </div>
 
-        <div class="controls-row">
-            <button class="btn" onclick="toggleMesh()" id="mesh-btn">3D Mesh View</button>
-            <button class="btn" onclick="setSpeed(0.5)">0.5x</button>
-            <button class="btn" onclick="setSpeed(1.0)">1.0x</button>
-            <button class="btn" onclick="setSpeed(2.0)">2.0x</button>
-        </div>
-
-        <div class="console" id="log">> AWAITING MISSION PARAMETERS...</div>
-        <div class="copyright">Copyright DarkFox Co. 2026</div>
+        <div class="console" id="log">> SYSTEM IDLE...</div>
     </div>
 
     <script>
         const video = document.getElementById('video');
-        const terminal = document.getElementById('log');
-        let showMesh = false;
-        let aiActive = false;
+        const logBox = document.getElementById('log');
         let canvas, ctx;
 
-        const isGitHub = window.location.hostname.includes('github.io');
-        const MODEL_URL = isGitHub ? `/${window.location.pathname.split('/')[1]}/weights/` : './weights/';
-
-        function log(msg, type = '') {
-            const div = document.createElement('div');
-            const time = new Date().toLocaleTimeString();
-            let style = '';
-            if(type === 'load') style = 'class="log-load"';
-            if(type === 'error') style = 'class="log-error"';
-            div.innerHTML = `[${time}] > <span ${style}>${msg}</span>`;
-            terminal.prepend(div);
+        function log(m) { 
+            const d = document.createElement('div'); 
+            d.innerText = `[${new Date().toLocaleTimeString()}] > ${m}`;
+            logBox.prepend(d);
         }
 
-        function setSpeed(s) { video.playbackRate = s; log(`SYSTEM: Playback speed adjusted to ${s}x`); }
-        function toggleMesh() { showMesh = !showMesh; document.getElementById('mesh-btn').classList.toggle('active-fx'); }
-
-        async function bootSystem(mode) {
-            document.getElementById('ui-actions').style.display = 'none';
-            document.getElementById('loader').style.display = 'block';
+        async function boot(mode) {
+            document.getElementById('status').innerText = "LOADING AI MODELS...";
+            const MODEL_URL = './weights/'; 
             
             try {
-                const models = ['tinyFaceDetector', 'faceLandmark68Net', 'faceExpressionNet', 'ageGenderNet'];
-                for (let i = 0; i < models.length; i++) {
-                    const m = models[i];
-                    log(`LOADED ASSET FROM: ${MODEL_URL}${m}_model-weights_manifest.json`, 'load');
-                    await faceapi.nets[m].loadFromUri(MODEL_URL);
-                    document.getElementById('bar').style.width = ((i+1)/models.length * 100) + "%";
-                }
+                // Lade alle Modelle explizit
+                await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+                await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+                await faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL);
+                await faceapi.nets.ageGenderNet.loadFromUri(MODEL_URL);
+                log("MODELS LOADED SUCCESSFULLY");
 
                 if (mode === 'camera') {
                     video.srcObject = await navigator.mediaDevices.getUserMedia({ video: true });
-                    document.getElementById('mode-display').innerText = "SYSTEM: LIVE FEED";
+                    document.getElementById('mode-display').innerText = "LIVE FEED";
                 } else {
                     const file = document.getElementById('video-upload').files[0];
                     video.src = URL.createObjectURL(file);
-                    document.getElementById('mode-display').innerText = "SYSTEM: VIDEO ANALYSIS";
-                    log(`IMPORT: Syncing file ${file.name}...`);
+                    document.getElementById('mode-display').innerText = "ANALYSIS";
                 }
 
-                // Wichtig: Warten bis Video bereit ist
-                video.onloadedmetadata = () => {
+                video.onloadeddata = () => {
                     video.play();
                     document.getElementById('overlay').style.display = 'none';
-                    if(!aiActive) initAI();
+                    startDetection();
                 };
-
-            } catch (e) {
-                log(`FATAL ERROR: ${e.message}`, 'error');
-            }
+            } catch (e) { log("ERROR: " + e.message); }
         }
 
-        function initAI() {
+        function startDetection() {
             canvas = faceapi.createCanvasFromMedia(video);
             document.getElementById('wrapper').append(canvas);
             ctx = canvas.getContext('2d');
-            aiActive = true;
-            requestAnimationFrame(processFrame);
-        }
 
-        async function processFrame() {
-            if(video.paused || video.ended || video.readyState < 2) {
-                requestAnimationFrame(processFrame);
-                return;
-            }
+            setInterval(async () => {
+                if (video.paused || video.readyState < 2) return;
 
-            const size = { width: video.offsetWidth, height: video.offsetHeight };
-            faceapi.matchDimensions(canvas, size);
+                const displaySize = { width: video.offsetWidth, height: video.offsetHeight };
+                faceapi.matchDimensions(canvas, displaySize);
 
-            const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.4 }))
-                .withFaceLandmarks().withFaceExpressions().withAgeAndGender();
+                // Sensibilität auf 0.3 gesenkt für bessere Erkennung
+                const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.3 }))
+                    .withFaceLandmarks()
+                    .withFaceExpressions()
+                    .withAgeAndGender();
 
-            const resized = faceapi.resizeResults(detections, size);
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            document.getElementById('target-count').innerText = `TARGETS: ${resized.length}`;
+                const resized = faceapi.resizeResults(detections, displaySize);
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                document.getElementById('target-count').innerText = `TARGETS: ${resized.length}`;
 
-            if (resized.length > 0) {
-                const primary = resized[0];
-                document.getElementById('val-g').innerText = primary.gender.toUpperCase();
-                document.getElementById('val-a').innerText = Math.round(primary.age) + " YRS";
-                document.getElementById('val-e').innerText = Object.keys(primary.expressions).reduce((a,b)=>primary.expressions[a]>primary.expressions[b]?a:b).toUpperCase();
+                if (resized.length > 0) {
+                    const p = resized[0];
+                    document.getElementById('val-g').innerText = p.gender.toUpperCase();
+                    document.getElementById('val-a').innerText = Math.round(p.age);
+                    document.getElementById('val-e').innerText = Object.keys(p.expressions).reduce((a,b)=>p.expressions[a]>p.expressions[b]?a:b).toUpperCase();
 
-                resized.forEach(res => {
-                    ctx.strokeStyle = '#5efcff';
-                    ctx.lineWidth = 2;
-                    ctx.strokeRect(res.detection.box.x, res.detection.box.y, res.detection.box.width, res.detection.box.height);
-                    if(showMesh) faceapi.draw.drawFaceLandmarks(canvas, res);
-                });
-            }
-            
-            // Nutze requestAnimationFrame statt setInterval für flüssigere Video-Analyse
-            setTimeout(() => requestAnimationFrame(processFrame), 50);
+                    resized.forEach(res => {
+                        // Box zeichnen
+                        ctx.strokeStyle = '#5efcff';
+                        ctx.lineWidth = 2;
+                        ctx.strokeRect(res.detection.box.x, res.detection.box.y, res.detection.box.width, res.detection.box.height);
+                        // Mesh zeichnen
+                        faceapi.draw.drawFaceLandmarks(canvas, res);
+                    });
+                }
+            }, 150);
         }
     </script>
 </body>
