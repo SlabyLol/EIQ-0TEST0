@@ -41,7 +41,7 @@
             justify-content: center;
         }
 
-        /* iPad Fixes: playsinline und object-fit */
+        /* WICHTIG: Keine scaleX(-1) Spiegelung mehr für lesbaren Text */
         video { 
             position: absolute; 
             top: 0; 
@@ -50,10 +50,9 @@
             height: 100%; 
             object-fit: cover; 
             z-index: 1; 
-            /* Spiegelt das Video wie einen echten Spiegel */
-            transform: scaleX(-1); 
         }
 
+        /* WICHTIG: Auch hier keine scaleX(-1) Spiegelung mehr */
         canvas { 
             position: absolute; 
             top: 0; 
@@ -61,8 +60,6 @@
             width: 100%; 
             height: 100%; 
             z-index: 2; 
-            /* Muss auch gespiegelt werden, damit die Boxen passen */
-            transform: scaleX(-1); 
         }
 
         .terminal { 
@@ -78,7 +75,6 @@
 
         .label { color: var(--primary); font-weight: bold; }
 
-        /* Der Button, der das iPad-Problem löst */
         #start-btn {
             position: absolute;
             z-index: 10;
@@ -129,14 +125,11 @@
             ? `/${repoName}/weights/` 
             : './weights/';
 
-        // Diese Funktion wird ERST aufgerufen, wenn du den Button klickst!
         startBtn.addEventListener('click', async () => {
-            // Verstecke den Button
             startBtn.style.display = 'none';
             dataDisplay.innerHTML = "> ACCESSING NEURAL WEIGHTS... PLEASE WAIT.";
 
             try {
-                // 1. Modelle laden
                 await Promise.all([
                     faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
                     faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL),
@@ -145,31 +138,26 @@
                 
                 dataDisplay.innerHTML = "> SYSTEM ONLINE. REQUESTING CAMERA OVERRIDE...";
 
-                // 2. Kamera anfordern
                 const stream = await navigator.mediaDevices.getUserMedia({ 
                     video: { facingMode: "user" } 
                 });
                 video.srcObject = stream;
                 
-                // 3. Video zwingen abzuspielen (Apple braucht das nach dem Klick)
                 await video.play();
                 dataDisplay.innerHTML = "> CAMERA FEED ACTIVE. CALIBRATING...";
 
             } catch (err) {
                 startBtn.style.display = 'block';
                 startBtn.innerText = "ERROR - RETRY";
-                dataDisplay.innerHTML = `<span style="color:red">> ERROR: ${err.message}</span><br>> Check camera permissions.`;
+                dataDisplay.innerHTML = `<span style="color:red">> ERROR: ${err.message}</span>`;
                 console.error(err);
             }
         });
 
-        // Wenn das Video läuft, starte die Erkennung
         video.addEventListener('play', () => {
-            // Canvas als Overlay für die Boxen erstellen
             const canvas = faceapi.createCanvasFromMedia(video);
             document.getElementById('wrapper').append(canvas);
             
-            // Größe des Videos an das Canvas anpassen
             const displaySize = { width: video.clientWidth, height: video.clientHeight };
             faceapi.matchDimensions(canvas, displaySize);
 
@@ -181,18 +169,17 @@
 
                 const resized = faceapi.resizeResults(detections, displaySize);
                 
-                // Vorheriges Bild löschen
+                // Canvas leeren
                 const ctx = canvas.getContext('2d');
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 
-                // Neue Boxen zeichnen (Farbe wird über die Library definiert, blau standard)
+                // WICHTIG: Die Standard-Draw-Funktionen nutzen jetzt ungespiegelte Koordinaten
                 faceapi.draw.drawDetections(canvas, resized);
                 faceapi.draw.drawFaceExpressions(canvas, resized);
 
                 // Terminal Text aktualisieren
                 if (resized.length > 0) {
                     const { age, gender, expressions } = resized[0];
-                    // Finde die stärkste Emotion
                     const emotion = Object.keys(expressions).reduce((a, b) => expressions[a] > expressions[b] ? a : b);
                     dataDisplay.innerHTML = `<span class="label">> TARGET LOCKED:</span> GENDER: ${gender.toUpperCase()} | AGE: ~${Math.round(age)} | STATUS: ${emotion.toUpperCase()}`;
                 } else {
