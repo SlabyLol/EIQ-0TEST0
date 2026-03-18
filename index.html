@@ -3,190 +3,161 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DarkFox AI Scanner</title>
+    <title>DarkFox AI - Terminal v2.0</title>
     <script src="dist/face-api.min.js"></script>
     <style>
-        :root { --primary: #ff4d00; --bg: #050505; }
-        
+        :root { --primary: #ff4d00; --bg: #050505; --text: #00ff00; }
         * { box-sizing: border-box; }
-        
         body { 
-            margin: 0; 
-            background: var(--bg); 
-            color: white; 
+            margin: 0; background: var(--bg); color: white; 
             font-family: 'Courier New', monospace; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: center; 
-            min-height: 100vh;
-            overflow: hidden;
+            display: flex; flex-direction: column; align-items: center; 
+            justify-content: center; min-height: 100vh; overflow: hidden;
         }
-
-        .header { margin-bottom: 20px; text-align: center; }
-        .header h1 { color: var(--primary); letter-spacing: 5px; margin: 0; font-size: 1.5rem; text-shadow: 0 0 10px rgba(255,77,0,0.5); }
-        .header p { margin: 5px 0 0; font-size: 0.8rem; color: #666; }
+        
+        .header { text-align: center; margin-bottom: 10px; }
+        .header h1 { color: var(--primary); letter-spacing: 4px; font-size: 1.2rem; margin: 0; }
 
         .viewfinder { 
-            position: relative; 
-            width: 90vw; 
-            max-width: 640px; 
-            height: 60vh;
-            max-height: 480px;
-            background: #111; 
-            border: 2px solid #333; 
-            box-shadow: 0 0 20px rgba(255, 77, 0, 0.1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            position: relative; width: 90vw; max-width: 640px; aspect-ratio: 4/3;
+            background: #111; border: 1px solid #333; overflow: hidden;
         }
+        video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; }
+        canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; }
 
-        /* WICHTIG: Keine scaleX(-1) Spiegelung mehr für lesbaren Text */
-        video { 
-            position: absolute; 
-            top: 0; 
-            left: 0; 
-            width: 100%; 
-            height: 100%; 
-            object-fit: cover; 
-            z-index: 1; 
+        /* LOADING BAR STYLE */
+        .loading-container {
+            position: absolute; inset: 0; background: rgba(0,0,0,0.9);
+            display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100;
         }
+        .progress-box { width: 70%; height: 20px; border: 1px solid var(--primary); padding: 2px; margin-top: 10px; }
+        #progress-fill { width: 0%; height: 100%; background: var(--primary); transition: width 0.3s; }
 
-        /* WICHTIG: Auch hier keine scaleX(-1) Spiegelung mehr */
-        canvas { 
-            position: absolute; 
-            top: 0; 
-            left: 0; 
-            width: 100%; 
-            height: 100%; 
-            z-index: 2; 
-        }
-
+        /* DEBUG PROTOKOLL STYLE */
         .terminal { 
-            margin-top: 20px; 
-            width: 90vw; 
-            max-width: 640px; 
-            padding: 15px; 
-            background: #0a0a0a; 
-            border-left: 3px solid var(--primary); 
-            font-size: 0.85rem;
-            min-height: 80px;
+            margin-top: 10px; width: 90vw; max-width: 640px; 
+            height: 120px; background: #0a0a0a; 
+            border-left: 3px solid var(--primary); padding: 10px;
+            font-size: 0.7rem; color: var(--text); overflow-y: auto;
+            border-bottom: 1px solid #222;
         }
-
-        .label { color: var(--primary); font-weight: bold; }
+        .log-entry { margin-bottom: 3px; border-bottom: 1px solid #111; }
+        .log-time { color: #555; margin-right: 10px; }
 
         #start-btn {
-            position: absolute;
-            z-index: 10;
-            background: transparent;
-            color: var(--primary);
-            border: 2px solid var(--primary);
-            padding: 15px 30px;
-            font-family: 'Courier New', monospace;
-            font-size: 1.2rem;
-            font-weight: bold;
-            cursor: pointer;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            box-shadow: inset 0 0 10px rgba(255,77,0,0.2), 0 0 10px rgba(255,77,0,0.2);
-            transition: 0.3s;
-        }
-
-        #start-btn:active {
-            background: var(--primary);
-            color: black;
+            background: var(--primary); color: black; border: none;
+            padding: 15px 30px; font-weight: bold; cursor: pointer; letter-spacing: 2px;
         }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <h1>DARKFOX AI</h1>
-        <p>BIOMETRIC SCAN UNIT</p>
+        <h1>DARKFOX AI SYSTEM</h1>
     </div>
     
     <div class="viewfinder" id="wrapper">
-        <button id="start-btn">INITIALIZE SCANNER</button>
-        <video id="video" autoplay muted playsinline webkit-playsinline></video>
+        <div id="loading-screen" class="loading-container" style="display: none;">
+            <div style="color: var(--primary); font-size: 0.8rem;">LOADING NEURAL WEIGHTS...</div>
+            <div class="progress-box"><div id="progress-fill"></div></div>
+            <div id="loading-percent" style="font-size: 0.7rem; margin-top: 5px;">0%</div>
+        </div>
+        
+        <button id="start-btn" onclick="initApp()">INITIALIZE SCANNER</button>
+        <video id="video" autoplay muted playsinline></video>
     </div>
 
-    <div class="terminal">
-        <div id="data-display">> SYSTEM WAITING FOR USER INITIALIZATION...</div>
+    <div class="terminal" id="debug-log">
+        <div class="log-entry">> SYSTEM STANDBY. AWAITING USER COMMAND...</div>
     </div>
 
     <script>
         const video = document.getElementById('video');
+        const debugLog = document.getElementById('debug-log');
         const startBtn = document.getElementById('start-btn');
-        const dataDisplay = document.getElementById('data-display');
+        const loadingScreen = document.getElementById('loading-screen');
+        const progressFill = document.getElementById('progress-fill');
+        const loadingPercent = document.getElementById('loading-percent');
 
-        // Dynamischer Pfad zu deinen Modellen
         const repoName = window.location.pathname.split('/')[1];
-        const MODEL_URL = window.location.hostname.includes('github.io') 
-            ? `/${repoName}/weights/` 
-            : './weights/';
+        const MODEL_URL = window.location.hostname.includes('github.io') ? `/${repoName}/weights/` : './weights/';
 
-        startBtn.addEventListener('click', async () => {
+        function log(msg) {
+            const time = new Date().toLocaleTimeString().split(' ')[0];
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerHTML = `<span class="log-time">[${time}]</span> > ${msg}`;
+            debugLog.prepend(entry);
+        }
+
+        async function initApp() {
             startBtn.style.display = 'none';
-            dataDisplay.innerHTML = "> ACCESSING NEURAL WEIGHTS... PLEASE WAIT.";
+            loadingScreen.style.display = 'flex';
+            log("USER_INIT: Starting sequence...");
 
             try {
-                await Promise.all([
-                    faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
-                    faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL),
-                    faceapi.nets.ageGenderNet.loadFromUri(MODEL_URL)
-                ]);
-                
-                dataDisplay.innerHTML = "> SYSTEM ONLINE. REQUESTING CAMERA OVERRIDE...";
-
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: "user" } 
-                });
+                // Kamera Vorbereitung
+                log("CAMERA: Requesting user media...");
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
                 video.srcObject = stream;
-                
-                await video.play();
-                dataDisplay.innerHTML = "> CAMERA FEED ACTIVE. CALIBRATING...";
+                log("CAMERA: Stream established.");
+
+                // Modelle laden mit Progress-Sim
+                const models = [
+                    { name: "TinyFaceDetector", net: faceapi.nets.tinyFaceDetector },
+                    { name: "FaceExpressions", net: faceapi.nets.faceExpressionNet },
+                    { name: "AgeGenderNet", net: faceapi.nets.ageGenderNet }
+                ];
+
+                for (let i = 0; i < models.length; i++) {
+                    const perc = Math.round(((i + 1) / models.length) * 100);
+                    log(`CORE: Loading ${models[i].name}...`);
+                    await models[i].net.loadFromUri(MODEL_URL);
+                    progressFill.style.width = perc + "%";
+                    loadingPercent.innerText = perc + "%";
+                }
+
+                log("CORE: All models active. Ready.");
+                loadingScreen.style.display = 'none';
+                startAnalysis();
 
             } catch (err) {
-                startBtn.style.display = 'block';
-                startBtn.innerText = "ERROR - RETRY";
-                dataDisplay.innerHTML = `<span style="color:red">> ERROR: ${err.message}</span>`;
-                console.error(err);
+                log("FATAL ERROR: " + err.message);
+                loadingScreen.innerHTML = `<div style="color:red">ERROR: ${err.message}</div>`;
             }
-        });
+        }
 
-        video.addEventListener('play', () => {
+        async function startAnalysis() {
             const canvas = faceapi.createCanvasFromMedia(video);
             document.getElementById('wrapper').append(canvas);
-            
-            const displaySize = { width: video.clientWidth, height: video.clientHeight };
+            const displaySize = { width: video.offsetWidth, height: video.offsetHeight };
             faceapi.matchDimensions(canvas, displaySize);
 
-            // Alle 150ms das Gesicht scannen
+            log("ANALYSIS: Neural Engine started (Input: 128px)");
+
             setInterval(async () => {
-                const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions())
+                const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 128 }))
                     .withFaceExpressions()
                     .withAgeAndGender();
 
                 const resized = faceapi.resizeResults(detections, displaySize);
-                
-                // Canvas leeren
                 const ctx = canvas.getContext('2d');
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
-                
-                // WICHTIG: Die Standard-Draw-Funktionen nutzen jetzt ungespiegelte Koordinaten
-                faceapi.draw.drawDetections(canvas, resized);
-                faceapi.draw.drawFaceExpressions(canvas, resized);
 
-                // Terminal Text aktualisieren
                 if (resized.length > 0) {
-                    const { age, gender, expressions } = resized[0];
-                    const emotion = Object.keys(expressions).reduce((a, b) => expressions[a] > expressions[b] ? a : b);
-                    dataDisplay.innerHTML = `<span class="label">> TARGET LOCKED:</span> GENDER: ${gender.toUpperCase()} | AGE: ~${Math.round(age)} | STATUS: ${emotion.toUpperCase()}`;
-                } else {
-                    dataDisplay.innerHTML = `<span class="label">> SCANNING:</span> NO TARGET DETECTED...`;
+                    resized.forEach(result => {
+                        const { detection, age, gender, expressions } = result;
+                        const emotion = Object.keys(expressions).reduce((a, b) => expressions[a] > expressions[b] ? a : b);
+                        
+                        ctx.strokeStyle = '#ff4d00';
+                        ctx.lineWidth = 2;
+                        ctx.strokeRect(detection.box.x, detection.box.y, detection.box.width, detection.box.height);
+
+                        log(`TARGET: ${gender.toUpperCase()} | ${Math.round(age)}Y | ${emotion.toUpperCase()}`);
+                    });
                 }
-            }, 150);
-        });
+            }, 200);
+        }
     </script>
 </body>
 </html>
