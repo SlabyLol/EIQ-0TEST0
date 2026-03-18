@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DarkFox AI - Terminal v2026</title>
+    <title>DarkFox AI - Terminal v4.5</title>
     <script src="dist/face-api.min.js"></script>
     <style>
-        :root { --accent: #5efcff; --bg: #04080d; --panel: #0b141d; --border: #1a2f3f; --text: #e2f8ff; --warning: #ff4d00; }
+        :root { --accent: #5efcff; --bg: #04080d; --panel: #0b141d; --border: #1a2f3f; --text: #e2f8ff; --warning: #ff4d00; --log-btn: #ffcc00; --mesh-btn: #00ff66; }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { background: var(--bg); color: var(--text); font-family: 'Consolas', monospace; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; overflow: hidden; }
         
-        .main-container { width: 95vw; max-width: 720px; display: flex; flex-direction: column; gap: 10px; }
+        .main-container { width: 95vw; max-width: 720px; display: flex; flex-direction: column; gap: 10px; z-index: 5; }
 
         /* VIEWPORT */
         .viewport { 
@@ -30,7 +30,7 @@
         #mode-display { top: 12px; left: 12px; }
         #target-count { top: 12px; right: 12px; color: var(--warning); border-color: var(--warning); }
 
-        /* BOOT SCREEN (KEIN INSTANT BOOT) */
+        /* BOOT SCREEN */
         #boot-screen {
             position: absolute; inset: 0; background: var(--bg);
             display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100;
@@ -44,35 +44,69 @@
         }
         .btn-init:hover { background: var(--accent); color: #000; box-shadow: 0 0 20px var(--accent); }
 
-        #bar-container { width: 220px; height: 4px; background: #111; margin-top: 20px; border-radius: 2px; display: none; }
-        #bar { width: 0%; height: 100%; background: var(--accent); transition: width 0.3s; }
+        /* FLOATING CONTROLS (UNRECHTS) */
+        .controls-container {
+            position: fixed; bottom: 20px; right: 20px; z-index: 200;
+            display: flex; flex-direction: column; gap: 10px;
+        }
+        .ctrl-btn {
+            background: rgba(0,0,0,0.8); padding: 10px 15px; border-radius: 5px; 
+            font-size: 10px; font-weight: bold; cursor: pointer; 
+            text-transform: uppercase; letter-spacing: 1px; transition: 0.3s;
+        }
+        #log-trigger { color: var(--log-btn); border: 1px solid var(--log-btn); }
+        #log-trigger:hover { background: var(--log-btn); color: #000; }
+        
+        #mesh-trigger { color: var(--mesh-btn); border: 1px solid var(--mesh-btn); }
+        #mesh-trigger.active { background: var(--mesh-btn); color: #000; box-shadow: 0 0 15px var(--mesh-btn); }
 
-        /* UI ELEMENTS */
+        /* MODAL LOG */
+        #log-modal {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9);
+            z-index: 300; align-items: center; justify-content: center; padding: 20px;
+        }
+        .modal-content {
+            background: var(--panel); border: 1px solid var(--log-btn); width: 100%; max-width: 500px;
+            padding: 20px; border-radius: 10px; position: relative;
+        }
+        #log-text { font-size: 11px; color: #8899aa; white-space: pre-wrap; max-height: 300px; overflow-y: auto; }
+        .close-btn { position: absolute; top: 10px; right: 10px; color: #666; cursor: pointer; font-size: 20px; }
+
+        /* DATA CARDS */
         .data-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
         .data-card { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 12px; text-align: center; }
         .label-tag { font-size: 9px; color: var(--accent); font-weight: bold; }
         .label-val { font-size: 16px; font-weight: 900; display: block; margin-top: 4px; }
 
         .console { 
-            background: #010409; border-radius: 8px; padding: 10px; height: 120px; 
+            background: #010409; border-radius: 8px; padding: 10px; height: 90px; 
             overflow-y: auto; font-size: 10px; color: #445566; border: 1px solid var(--border);
         }
-        .log-update { color: #5efcff; margin-bottom: 10px; white-space: pre-wrap; font-size: 9px; border-left: 2px solid var(--accent); padding-left: 8px; }
-        .copyright { font-size: 10px; color: #223344; text-align: center; margin-top: 5px; font-weight: bold; }
     </style>
 </head>
 <body>
 
+    <div class="controls-container">
+        <button id="mesh-trigger" class="ctrl-btn" onclick="toggleMesh()">3D Mesh OFF</button>
+        <button id="log-trigger" class="ctrl-btn" onclick="openLog()">Update-Log.txt</button>
+    </div>
+
+    <div id="log-modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeLog()">&times;</span>
+            <div style="color:var(--log-btn); margin-bottom:10px; font-weight:bold;">REPOSITORY LOG: update-log.txt</div>
+            <div id="log-text">Lade...</div>
+        </div>
+    </div>
+
     <div class="main-container">
         <div class="viewport" id="wrapper">
-            <div class="badge" id="mode-display">DARKFOX OS v4.1</div>
+            <div class="badge" id="mode-display">DARKFOX OS v4.5</div>
             <div class="badge" id="target-count">TARGETS: 0</div>
             
             <div id="boot-screen">
                 <img src="IMG_0643.jpeg" class="boot-logo">
                 <button class="btn-init" id="start-btn" onclick="initializeSystem()">Initialize System</button>
-                <div id="status" style="margin-top:15px; font-size:9px; color:var(--accent); display:none;">LOADING NEURAL CORES...</div>
-                <div id="bar-container"><div id="bar"></div></div>
             </div>
             
             <video id="video" autoplay muted playsinline></video>
@@ -84,53 +118,50 @@
             <div class="data-card"><span class="label-tag">EMOTION</span><span id="val-e" class="label-val">--</span></div>
         </div>
 
-        <div class="console" id="log"></div>
-        <div class="copyright">Copyright DarkFox Co. 2026</div>
+        <div class="console" id="log-console">> SYSTEM STANDBY. READY FOR BOOT.</div>
     </div>
 
     <script>
         const video = document.getElementById('video');
-        const terminal = document.getElementById('log');
-        let canvas, ctx;
+        const terminal = document.getElementById('log-console');
+        let canvas, ctx, showMesh = false;
 
-        function log(m, isUpdate = false) {
+        function log(m) {
             const div = document.createElement('div');
-            if(isUpdate) div.className = 'log-update';
-            div.innerText = m;
+            div.innerText = `[${new Date().toLocaleTimeString()}] > ${m}`;
             terminal.prepend(div);
         }
 
-        // Lädt die echte .txt Datei aus deinem Repository
-        async function fetchUpdateLog() {
-            try {
-                const response = await fetch('update-log.txt');
-                if (response.ok) {
-                    const text = await response.text();
-                    log("--- EXTERNAL UPDATE-LOG LOADED ---\n" + text, true);
-                } else {
-                    log("SYSTEM: update-log.txt not found in repository root.");
-                }
-            } catch (e) {
-                log("SYSTEM: Error fetching update-log.txt");
-            }
+        // 3D Mesh Toggle
+        function toggleMesh() {
+            showMesh = !showMesh;
+            const btn = document.getElementById('mesh-trigger');
+            btn.classList.toggle('active');
+            btn.innerText = showMesh ? "3D Mesh ON" : "3D Mesh OFF";
+            log(`SYSTEM: 3D Mesh Engine ${showMesh ? 'aktiviert' : 'deaktiviert'}.`);
         }
 
+        // Log-Datei Funktionen
+        async function openLog() {
+            document.getElementById('log-modal').style.display = 'flex';
+            try {
+                const response = await fetch('update-log.txt');
+                const text = response.ok ? await response.text() : "update-log.txt nicht gefunden.";
+                document.getElementById('log-text').innerText = text;
+            } catch (e) { document.getElementById('log-text').innerText = "Fehler beim Laden."; }
+        }
+        function closeLog() { document.getElementById('log-modal').style.display = 'none'; }
+
         async function initializeSystem() {
-            document.getElementById('start-btn').style.display = 'none';
-            document.getElementById('status').style.display = 'block';
-            document.getElementById('bar-container').style.display = 'block';
-            
-            await fetchUpdateLog();
-            log("SYSTEM: Starting Boot Sequence...");
+            document.getElementById('start-btn').innerText = "BOOTING...";
+            log("BOOT: Lade KI-Module...");
 
             const MODEL_URL = './weights/';
-            const nets = ['tinyFaceDetector', 'faceLandmark68Net', 'faceExpressionNet', 'ageGenderNet'];
-
             try {
-                for(let i=0; i<nets.length; i++) {
-                    await faceapi.nets[nets[i]].loadFromUri(MODEL_URL);
-                    document.getElementById('bar').style.width = ((i+1)/nets.length * 100) + "%";
-                }
+                await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+                await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+                await faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL);
+                await faceapi.nets.ageGenderNet.loadFromUri(MODEL_URL);
 
                 const stream = await navigator.mediaDevices.getUserMedia({ video: true });
                 video.srcObject = stream;
@@ -152,10 +183,10 @@
                 const dims = { width: video.offsetWidth, height: video.offsetHeight };
                 faceapi.matchDimensions(canvas, dims);
 
-                const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.4 }))
+                const results = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.4 }))
                     .withFaceLandmarks().withFaceExpressions().withAgeAndGender();
 
-                const resized = faceapi.resizeResults(detections, dims);
+                const resized = faceapi.resizeResults(results, dims);
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 document.getElementById('target-count').innerText = `TARGETS: ${resized.length}`;
 
@@ -169,13 +200,12 @@
                         ctx.strokeStyle = '#5efcff';
                         ctx.lineWidth = 2;
                         ctx.strokeRect(res.detection.box.x, res.detection.box.y, res.detection.box.width, res.detection.box.height);
-                        faceapi.draw.drawFaceLandmarks(canvas, res);
                         
-                        // ID Beschriftung
+                        if(showMesh) faceapi.draw.drawFaceLandmarks(canvas, res);
+                        
                         ctx.save();
                         ctx.scale(-1, 1);
                         ctx.fillStyle = '#5efcff';
-                        ctx.font = 'bold 11px Consolas';
                         ctx.fillText(`ID#00${index+1}`, -(res.detection.box.x + 5), res.detection.box.y - 7);
                         ctx.restore();
                     });
