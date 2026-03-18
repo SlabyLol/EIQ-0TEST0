@@ -3,25 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DarkFox AI - Terminal v4.8</title>
+    <title>DarkFox AI - Terminal v5.0</title>
     <script src="dist/face-api.min.js"></script>
     <style>
-        :root { --accent: #5efcff; --bg: #04080d; --panel: #0b141d; --border: #1a2f3f; --text: #e2f8ff; --warning: #ff4d00; --log-btn: #ffcc00; --mesh-btn: #00ff66; }
+        :root { 
+            --accent: #5efcff; --bg: #04080d; --panel: #0b141d; --border: #1a2f3f; 
+            --text: #e2f8ff; --warning: #ff4d00; --log-btn: #ffcc00; --mesh-btn: #00ff66; --bug-btn: #ff3300;
+        }
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: var(--bg); color: var(--text); font-family: 'Consolas', monospace; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; overflow: hidden; }
+        body { 
+            background: var(--bg); color: var(--text); font-family: 'Consolas', monospace; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            min-height: 100vh; overflow: hidden; 
+        }
         
         .main-container { width: 95vw; max-width: 720px; display: flex; flex-direction: column; gap: 10px; z-index: 5; }
 
-        /* VIEWPORT */
+        /* VIEWPORT SYSTEM */
         .viewport { 
             position: relative; width: 100%; aspect-ratio: 4/3;
             background: #000; border-radius: 12px; overflow: hidden; border: 2px solid var(--border);
-            box-shadow: 0 0 40px rgba(94, 252, 255, 0.2);
+            box-shadow: 0 0 40px rgba(94, 252, 255, 0.15);
         }
         video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
         canvas { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 10; pointer-events: none; transform: scaleX(-1); }
 
-        /* BADGES */
         .badge {
             position: absolute; z-index: 20; background: rgba(0,0,0,0.85); 
             padding: 6px 14px; border-radius: 4px; font-size: 11px; 
@@ -30,63 +36,74 @@
         #mode-display { top: 12px; left: 12px; }
         #target-count { top: 12px; right: 12px; color: var(--warning); border-color: var(--warning); }
 
-        /* BOOT SCREEN */
+        /* BOOT INTERFACE */
         #boot-screen {
             position: absolute; inset: 0; background: var(--bg);
             display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100;
+            transition: opacity 0.8s;
         }
         .boot-logo { width: 130px; height: 130px; border-radius: 50%; box-shadow: 0 0 30px var(--accent); margin-bottom: 25px; }
         
-        .btn-init {
+        .btn-main {
             padding: 12px 24px; background: transparent; color: var(--accent);
             border: 1px solid var(--accent); border-radius: 4px; font-weight: 800; cursor: pointer;
-            text-transform: uppercase; letter-spacing: 2px; font-size: 12px; transition: 0.3s;
+            text-transform: uppercase; letter-spacing: 2px; font-size: 11px; transition: 0.3s;
         }
-        .btn-init:hover { background: var(--accent); color: #000; box-shadow: 0 0 20px var(--accent); }
+        .btn-main:hover { background: var(--accent); color: #000; box-shadow: 0 0 20px var(--accent); }
 
-        /* FLOATING CONTROLS */
+        /* CONTROL PANEL */
         .controls-container {
             position: fixed; bottom: 20px; right: 20px; z-index: 200;
-            display: flex; flex-direction: column; gap: 10px;
+            display: flex; flex-direction: column; gap: 8px;
         }
         .ctrl-btn {
-            background: rgba(0,0,0,0.8); padding: 10px 15px; border-radius: 5px; 
+            background: rgba(0,0,0,0.85); padding: 10px 15px; border-radius: 4px; 
             font-size: 10px; font-weight: bold; cursor: pointer; 
-            text-transform: uppercase; letter-spacing: 1px; transition: 0.3s;
+            text-transform: uppercase; letter-spacing: 1px; transition: 0.2s;
+            min-width: 140px; text-align: left;
         }
-        #log-trigger { color: var(--log-btn); border: 1px solid var(--log-btn); }
-        #mesh-trigger { color: var(--mesh-btn); border: 1px solid var(--mesh-btn); }
-        #mesh-trigger.active { background: var(--mesh-btn); color: #000; box-shadow: 0 0 15px var(--mesh-btn); }
+        #btn-bug { color: var(--bug-btn); border: 1px solid var(--bug-btn); }
+        #btn-mesh { color: var(--mesh-btn); border: 1px solid var(--mesh-btn); }
+        #btn-mesh.active { background: var(--mesh-btn); color: #000; box-shadow: 0 0 15px var(--mesh-btn); }
+        #btn-log { color: var(--log-btn); border: 1px solid var(--log-btn); }
 
-        /* MODAL & SCROLLBAR */
-        #log-modal {
-            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9);
+        /* MODAL SYSTEM */
+        .modal {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95);
             z-index: 300; align-items: center; justify-content: center; padding: 20px;
         }
         .modal-content {
-            background: var(--panel); border: 1px solid var(--log-btn); width: 100%; max-width: 550px;
-            padding: 20px; border-radius: 10px; position: relative;
+            background: var(--panel); border: 1px solid var(--border); width: 100%; max-width: 500px;
+            padding: 25px; border-radius: 12px; position: relative;
         }
-        #log-text { 
+        .modal-header { font-weight: bold; margin-bottom: 15px; text-transform: uppercase; font-size: 13px; }
+        
+        /* SCROLLABLE LOG AREA */
+        #log-body { 
             font-size: 11px; color: #8899aa; white-space: pre-wrap; 
-            max-height: 350px; overflow-y: auto; user-select: all; cursor: text;
-            padding-right: 10px;
+            max-height: 300px; overflow-y: auto; user-select: all;
+            padding-right: 12px; line-height: 1.6;
         }
-        /* Custom Scrollbar */
-        #log-text::-webkit-scrollbar { width: 5px; }
-        #log-text::-webkit-scrollbar-track { background: #0a1118; }
-        #log-text::-webkit-scrollbar-thumb { background: var(--log-btn); border-radius: 5px; }
+        #log-body::-webkit-scrollbar { width: 4px; }
+        #log-body::-webkit-scrollbar-thumb { background: var(--log-btn); border-radius: 10px; }
 
-        .close-btn { position: absolute; top: 10px; right: 10px; color: #666; cursor: pointer; font-size: 20px; }
+        /* FORM STYLES */
+        .bug-input {
+            width: 100%; background: #010409; border: 1px solid var(--border); color: #fff;
+            padding: 10px; margin-bottom: 10px; font-family: monospace; font-size: 12px; outline: none;
+        }
+        .bug-input:focus { border-color: var(--bug-btn); }
+
+        .close-x { position: absolute; top: 15px; right: 15px; color: #445566; cursor: pointer; font-size: 22px; }
 
         /* DATA CARDS */
         .data-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
         .data-card { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 12px; text-align: center; }
-        .label-tag { font-size: 9px; color: var(--accent); font-weight: bold; }
-        .label-val { font-size: 16px; font-weight: 900; display: block; margin-top: 4px; }
+        .tag { font-size: 9px; color: var(--accent); font-weight: bold; }
+        .val { font-size: 15px; font-weight: 900; display: block; margin-top: 4px; }
 
-        .console { 
-            background: #010409; border-radius: 8px; padding: 10px; height: 90px; 
+        .terminal { 
+            background: #010409; border-radius: 8px; padding: 10px; height: 100px; 
             overflow-y: auto; font-size: 10px; color: #445566; border: 1px solid var(--border);
         }
     </style>
@@ -94,80 +111,112 @@
 <body>
 
     <div class="controls-container">
-        <button id="mesh-trigger" class="ctrl-btn" onclick="toggleMesh()">3D Mesh OFF</button>
-        <button id="log-trigger" class="ctrl-btn" onclick="openUpdateLog()">Update-Log.txt</button>
+        <button id="btn-bug" class="ctrl-btn" onclick="toggleModal('modal-bug', true)">[!] Report Bug</button>
+        <button id="btn-mesh" class="ctrl-btn" onclick="toggleMesh()">3D Mesh OFF</button>
+        <button id="btn-log" class="ctrl-btn" onclick="loadLogFile()">Update-Log.txt</button>
     </div>
 
-    <div id="log-modal">
-        <div class="modal-content">
-            <span class="close-btn" onclick="closeModal()">&times;</span>
-            <div style="color:var(--log-btn); margin-bottom:10px; font-weight:bold;">REPOSITORY LOG: update-log.txt</div>
-            <div id="log-text">Fetching data...</div>
+    <div id="modal-bug" class="modal">
+        <div class="modal-content" style="border-color: var(--bug-btn);">
+            <span class="close-x" onclick="toggleModal('modal-bug', false)">&times;</span>
+            <div class="modal-header" style="color: var(--bug-btn);">Bug Reporting Tool</div>
+            <form id="bug-form" action="https://formspree.io/f/darkfox.tobias@outlook.com" method="POST">
+                <input type="text" name="name" class="bug-input" placeholder="User Name" required>
+                <input type="email" id="bug-email" name="email" class="bug-input" placeholder="Contact Email" required>
+                <input type="text" name="subject" class="bug-input" placeholder="Bug Subject" required>
+                <textarea name="message" class="bug-input" style="height: 80px; resize: none;" placeholder="Provide details..." required></textarea>
+                <button type="submit" class="btn-main" style="width: 100%; border-color: var(--bug-btn); color: var(--bug-btn);">Transmit Report</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-log" class="modal">
+        <div class="modal-content" style="border-color: var(--log-btn);">
+            <span class="close-x" onclick="toggleModal('modal-log', false)">&times;</span>
+            <div class="modal-header" style="color: var(--log-btn);">External Update History</div>
+            <div id="log-body">Syncing with repository...</div>
         </div>
     </div>
 
     <div class="main-container">
-        <div class="viewport" id="viewport-wrapper">
-            <div class="badge" id="mode-display">SYSTEM: STANDBY</div>
+        <div class="viewport" id="cam-wrapper">
+            <div class="badge" id="mode-display">ENGINE: STANDBY</div>
             <div class="badge" id="target-count">TARGETS: 0</div>
             
             <div id="boot-screen">
-                <img src="IMG_0643.jpeg" class="boot-logo">
-                <button class="btn-init" id="boot-btn" onclick="initiateSystem()">Initialize System</button>
+                <img src="IMG_0643.jpeg" class="boot-logo" alt="Logo">
+                <button class="btn-main" id="init-btn" onclick="startEngine()">Initialize System</button>
             </div>
             
-            <video id="webcam" autoplay muted playsinline></video>
+            <video id="video-feed" autoplay muted playsinline></video>
         </div>
 
         <div class="data-grid">
-            <div class="data-card"><span class="label-tag">PRIMARY SEX</span><span id="res-gender" class="label-val">--</span></div>
-            <div class="data-card"><span class="label-tag">EST. AGE</span><span id="res-age" class="label-val">--</span></div>
-            <div class="data-card"><span class="label-tag">EMOTION</span><span id="res-emotion" class="label-val">--</span></div>
+            <div class="data-card"><span class="tag">GENDER</span><span id="out-gender" class="val">--</span></div>
+            <div class="data-card"><span class="tag">EST. AGE</span><span id="out-age" class="val">--</span></div>
+            <div class="data-card"><span class="tag">EMOTION</span><span id="out-emotion" class="val">--</span></div>
         </div>
 
-        <div class="console" id="terminal-out">> AWAITING SYSTEM BOOT...</div>
+        <div class="terminal" id="term-out">> CONNECTED. AWAITING INITIALIZATION SEQUENCE.</div>
     </div>
 
     <script>
-        const video = document.getElementById('webcam');
-        const terminal = document.getElementById('terminal-out');
-        let canvas, ctx, isMeshActive = false;
+        const video = document.getElementById('video-feed');
+        const term = document.getElementById('term-out');
+        let canvas, ctx, meshEnabled = false;
 
-        function logToTerminal(msg) {
+        function printTerm(msg) {
             const div = document.createElement('div');
             div.innerText = `[${new Date().toLocaleTimeString()}] > ${msg}`;
-            terminal.prepend(div);
+            term.prepend(div);
+        }
+
+        // NAVIGATION LOGIC
+        function toggleModal(id, show) {
+            document.getElementById(id).style.display = show ? 'flex' : 'none';
+        }
+
+        async function loadLogFile() {
+            toggleModal('modal-log', true);
+            try {
+                const res = await fetch('update-log.txt');
+                const content = res.ok ? await res.text() : "ERROR: update-log.txt not found in root.";
+                document.getElementById('log-body').innerText = content;
+            } catch (e) { document.getElementById('log-body').innerText = "CONNECTION FAILED."; }
         }
 
         function toggleMesh() {
-            isMeshActive = !isMeshActive;
-            const btn = document.getElementById('mesh-trigger');
-            btn.classList.toggle('active');
-            btn.innerText = isMeshActive ? "3D Mesh ON" : "3D Mesh OFF";
-            logToTerminal(`SYSTEM: Mesh rendering ${isMeshActive ? 'ENABLED' : 'DISABLED'}`);
+            meshEnabled = !meshEnabled;
+            const b = document.getElementById('btn-mesh');
+            b.innerText = meshEnabled ? "3D Mesh ON" : "3D Mesh OFF";
+            b.classList.toggle('active');
+            printTerm(`ENGINE: Mesh overlay ${meshEnabled ? 'activated' : 'deactivated'}.`);
         }
 
-        async function openUpdateLog() {
-            document.getElementById('log-modal').style.display = 'flex';
-            try {
-                const res = await fetch('update-log.txt');
-                const text = res.ok ? await res.text() : "Log file not found.";
-                document.getElementById('log-text').innerText = text;
-            } catch (e) { document.getElementById('log-text').innerText = "Connection error."; }
-        }
-        function closeModal() { document.getElementById('log-modal').style.display = 'none'; }
+        // FORM VALIDATION
+        document.getElementById('bug-form').addEventListener('submit', function(e) {
+            const email = document.getElementById('bug-email').value;
+            const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+            if(!valid) {
+                e.preventDefault();
+                alert("CRITICAL: Invalid email format.");
+            } else {
+                printTerm("BUG-REPORT: Dispatching to darkfox.tobias@outlook.com...");
+            }
+        });
 
-        async function initiateSystem() {
-            document.getElementById('boot-btn').innerText = "BOOTING...";
-            logToTerminal("BOOT: Loading AI neural layers...");
+        // AI CORE
+        async function startEngine() {
+            document.getElementById('init-btn').innerText = "BOOTING...";
+            printTerm("CORE: Loading neural network modules...");
 
-            const modelPath = './weights/';
             try {
+                const PATH = './weights/';
                 await Promise.all([
-                    faceapi.nets.tinyFaceDetector.loadFromUri(modelPath),
-                    faceapi.nets.faceLandmark68Net.loadFromUri(modelPath),
-                    faceapi.nets.faceExpressionNet.loadFromUri(modelPath),
-                    faceapi.nets.ageGenderNet.loadFromUri(modelPath)
+                    faceapi.nets.tinyFaceDetector.loadFromUri(PATH),
+                    faceapi.nets.faceLandmark68Net.loadFromUri(PATH),
+                    faceapi.nets.faceExpressionNet.loadFromUri(PATH),
+                    faceapi.nets.ageGenderNet.loadFromUri(PATH)
                 ]);
 
                 const stream = await navigator.mediaDevices.getUserMedia({ video: true });
@@ -175,47 +224,47 @@
 
                 video.onloadedmetadata = () => {
                     document.getElementById('boot-screen').style.opacity = '0';
-                    setTimeout(() => document.getElementById('boot-screen').remove(), 1000);
-                    document.getElementById('mode-display').innerText = "SYSTEM: LIVE FEED";
-                    startAnalysis();
+                    setTimeout(() => document.getElementById('boot-screen').remove(), 800);
+                    document.getElementById('mode-display').innerText = "ENGINE: LIVE ANALYSIS";
+                    runProcessing();
                 };
-            } catch(e) { logToTerminal("BOOT ERROR: " + e.message); }
+            } catch(e) { printTerm("FATAL ERROR: " + e.message); }
         }
 
-        async function startAnalysis() {
+        async function runProcessing() {
             canvas = faceapi.createCanvasFromMedia(video);
-            document.getElementById('viewport-wrapper').append(canvas);
+            document.getElementById('cam-wrapper').append(canvas);
             ctx = canvas.getContext('2d');
 
             const loop = async () => {
                 const dims = { width: video.offsetWidth, height: video.offsetHeight };
                 if (canvas.width !== dims.width) faceapi.matchDimensions(canvas, dims);
 
-                const results = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.4 }))
+                const data = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.4 }))
                     .withFaceLandmarks().withFaceExpressions().withAgeAndGender();
 
-                const resized = faceapi.resizeResults(results, dims);
+                const scaled = faceapi.resizeResults(data, dims);
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
-                document.getElementById('target-count').innerText = `TARGETS: ${resized.length}`;
+                document.getElementById('target-count').innerText = `TARGETS: ${scaled.length}`;
 
-                if(resized.length > 0) {
-                    const p = resized[0];
-                    document.getElementById('res-gender').innerText = p.gender.toUpperCase();
-                    document.getElementById('res-age').innerText = Math.round(p.age) + " YRS";
-                    document.getElementById('res-emotion').innerText = Object.keys(p.expressions).reduce((a,b)=>p.expressions[a]>p.expressions[b]?a:b).toUpperCase();
+                if(scaled.length > 0) {
+                    const top = scaled[0];
+                    document.getElementById('out-gender').innerText = top.gender.toUpperCase();
+                    document.getElementById('out-age').innerText = Math.round(top.age) + " YRS";
+                    document.getElementById('out-emotion').innerText = Object.keys(top.expressions).reduce((a,b)=>top.expressions[a]>top.expressions[b]?a:b).toUpperCase();
 
-                    resized.forEach((res, idx) => {
+                    scaled.forEach((item, i) => {
                         ctx.strokeStyle = '#5efcff';
                         ctx.lineWidth = 2;
-                        ctx.strokeRect(res.detection.box.x, res.detection.box.y, res.detection.box.width, res.detection.box.height);
+                        ctx.strokeRect(item.detection.box.x, item.detection.box.y, item.detection.box.width, item.detection.box.height);
                         
-                        if(isMeshActive) faceapi.draw.drawFaceLandmarks(canvas, res);
+                        if(meshEnabled) faceapi.draw.drawFaceLandmarks(canvas, item);
                         
                         ctx.save();
                         ctx.scale(-1, 1);
                         ctx.fillStyle = '#5efcff';
-                        ctx.font = 'bold 12px Consolas';
-                        ctx.fillText(`ID#00${idx+1}`, -(res.detection.box.x + 5), res.detection.box.y - 7);
+                        ctx.font = 'bold 12px monospace';
+                        ctx.fillText(`ID#00${i+1}`, -(item.detection.box.x + 5), item.detection.box.y - 8);
                         ctx.restore();
                     });
                 }
