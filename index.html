@@ -3,140 +3,173 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DarkFox AI - Terminal v2.0</title>
+    <title>DarkFox AI - Advanced Terminal</title>
     <script src="dist/face-api.min.js"></script>
     <style>
-        :root { --primary: #ff4d00; --bg: #050505; --text: #00ff00; }
-        * { box-sizing: border-box; }
+        :root { --primary: #ff4d00; --primary-dim: rgba(255, 77, 0, 0.15); --bg: #050505; --text: #00ff00; }
+        
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        
         body { 
             margin: 0; background: var(--bg); color: white; 
             font-family: 'Courier New', monospace; 
             display: flex; flex-direction: column; align-items: center; 
             justify-content: center; min-height: 100vh; overflow: hidden;
         }
-        
-        .header { text-align: center; margin-bottom: 10px; }
-        .header h1 { color: var(--primary); letter-spacing: 4px; font-size: 1.2rem; margin: 0; }
+
+        /* Hintergrund-Effekt: Scanlines */
+        body::before {
+            content: " "; position: absolute; inset: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 4px, 3px 100%; z-index: 10; pointer-events: none;
+        }
+
+        .header { text-align: center; z-index: 5; margin-bottom: 10px; }
+        .header h1 { color: var(--primary); letter-spacing: 8px; font-size: 1.6rem; margin: 0; text-shadow: 0 0 15px var(--primary); }
 
         .viewfinder { 
-            position: relative; width: 90vw; max-width: 640px; aspect-ratio: 4/3;
-            background: #111; border: 1px solid #333; overflow: hidden;
+            position: relative; width: 95vw; max-width: 640px; aspect-ratio: 4/3;
+            background: #000; border: 1px solid #333; overflow: hidden;
+            box-shadow: 0 0 40px rgba(0,0,0,1);
         }
-        video { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; }
-        canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; }
 
-        /* LOADING BAR STYLE */
-        .loading-container {
-            position: absolute; inset: 0; background: rgba(0,0,0,0.9);
+        video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; filter: grayscale(0.2) contrast(1.2); }
+        canvas { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 2; }
+
+        /* MODERNER BOOT-SCREEN */
+        #boot-screen {
+            position: absolute; inset: 0; background: var(--bg);
             display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100;
         }
-        .progress-box { width: 70%; height: 20px; border: 1px solid var(--primary); padding: 2px; margin-top: 10px; }
-        #progress-fill { width: 0%; height: 100%; background: var(--primary); transition: width 0.3s; }
 
-        /* DEBUG PROTOKOLL STYLE */
+        .loader-ui { width: 250px; text-align: center; }
+        .progress-bar { width: 100%; height: 4px; background: #111; margin-top: 15px; position: relative; overflow: hidden; }
+        #progress-fill { position: absolute; left: 0; top: 0; height: 100%; width: 0%; background: var(--primary); box-shadow: 0 0 10px var(--primary); transition: width 0.4s; }
+
+        /* TERMINAL / DEBUG LOG */
         .terminal { 
-            margin-top: 10px; width: 90vw; max-width: 640px; 
-            height: 120px; background: #0a0a0a; 
-            border-left: 3px solid var(--primary); padding: 10px;
-            font-size: 0.7rem; color: var(--text); overflow-y: auto;
-            border-bottom: 1px solid #222;
+            margin-top: 15px; width: 95vw; max-width: 640px; 
+            height: 150px; background: rgba(10, 10, 10, 0.9); 
+            border: 1px solid #222; border-left: 4px solid var(--primary);
+            padding: 10px; font-size: 0.7rem; color: var(--text); 
+            overflow-y: hidden; display: flex; flex-direction: column-reverse;
         }
-        .log-entry { margin-bottom: 3px; border-bottom: 1px solid #111; }
-        .log-time { color: #555; margin-right: 10px; }
 
+        .log-entry { margin-bottom: 2px; opacity: 0.8; }
+        .log-entry.highlight { color: var(--primary); font-weight: bold; }
+
+        /* BUTTON DESIGN */
         #start-btn {
-            background: var(--primary); color: black; border: none;
-            padding: 15px 30px; font-weight: bold; cursor: pointer; letter-spacing: 2px;
+            padding: 20px 40px; background: transparent; color: var(--primary);
+            border: 2px solid var(--primary); font-family: 'Courier New', monospace;
+            font-weight: bold; cursor: pointer; letter-spacing: 4px;
+            transition: 0.3s; z-index: 110;
         }
+        #start-btn:hover { background: var(--primary); color: black; box-shadow: 0 0 20px var(--primary); }
+
+        /* RADAR SCAN EFFECT */
+        .radar-line {
+            position: absolute; width: 100%; height: 2px; background: rgba(255, 77, 0, 0.5);
+            box-shadow: 0 0 15px var(--primary); top: 0; z-index: 3;
+            animation: scan 3s linear infinite; display: none;
+        }
+        @keyframes scan { 0% { top: 0; } 100% { top: 100%; } }
     </style>
 </head>
 <body>
 
     <div class="header">
-        <h1>DARKFOX AI SYSTEM</h1>
+        <h1>DARKFOX AI</h1>
+        <div style="font-size: 0.6rem; color: #444; letter-spacing: 2px;">SECURE BIOMETRIC TERMINAL</div>
     </div>
     
     <div class="viewfinder" id="wrapper">
-        <div id="loading-screen" class="loading-container" style="display: none;">
-            <div style="color: var(--primary); font-size: 0.8rem;">LOADING NEURAL WEIGHTS...</div>
-            <div class="progress-box"><div id="progress-fill"></div></div>
-            <div id="loading-percent" style="font-size: 0.7rem; margin-top: 5px;">0%</div>
+        <div id="boot-screen">
+            <button id="start-btn" onclick="initializeSystem()">INITIALIZE</button>
+            <div class="loader-ui" id="loader-ui" style="display: none;">
+                <div id="load-status" style="font-size: 0.7rem; color: var(--primary);">MOUNTING CORE...</div>
+                <div class="progress-bar"><div id="progress-fill"></div></div>
+            </div>
         </div>
         
-        <button id="start-btn" onclick="initApp()">INITIALIZE SCANNER</button>
+        <div class="radar-line" id="radar"></div>
         <video id="video" autoplay muted playsinline></video>
     </div>
 
     <div class="terminal" id="debug-log">
-        <div class="log-entry">> SYSTEM STANDBY. AWAITING USER COMMAND...</div>
-    </div>
+        </div>
 
     <script>
         const video = document.getElementById('video');
         const debugLog = document.getElementById('debug-log');
         const startBtn = document.getElementById('start-btn');
-        const loadingScreen = document.getElementById('loading-screen');
+        const loaderUi = document.getElementById('loader-ui');
         const progressFill = document.getElementById('progress-fill');
-        const loadingPercent = document.getElementById('loading-percent');
+        const loadStatus = document.getElementById('load-status');
+        const bootScreen = document.getElementById('boot-screen');
+        const radar = document.getElementById('radar');
 
         const repoName = window.location.pathname.split('/')[1];
         const MODEL_URL = window.location.hostname.includes('github.io') ? `/${repoName}/weights/` : './weights/';
 
-        function log(msg) {
-            const time = new Date().toLocaleTimeString().split(' ')[0];
+        function log(msg, highlight = false) {
             const entry = document.createElement('div');
-            entry.className = 'log-entry';
-            entry.innerHTML = `<span class="log-time">[${time}]</span> > ${msg}`;
+            entry.className = highlight ? 'log-entry highlight' : 'log-entry';
+            entry.innerHTML = `> ${new Date().toLocaleTimeString().split(' ')[0]} | ${msg}`;
             debugLog.prepend(entry);
         }
 
-        async function initApp() {
+        async function initializeSystem() {
             startBtn.style.display = 'none';
-            loadingScreen.style.display = 'flex';
-            log("USER_INIT: Starting sequence...");
+            loaderUi.style.display = 'block';
+            log("BOOT: Manual override detected.");
 
             try {
-                // Kamera Vorbereitung
-                log("CAMERA: Requesting user media...");
+                // Kamera zuerst
+                log("IO: Initializing Camera Stream...");
                 const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
                 video.srcObject = stream;
-                log("CAMERA: Stream established.");
 
-                // Modelle laden mit Progress-Sim
-                const models = [
-                    { name: "TinyFaceDetector", net: faceapi.nets.tinyFaceDetector },
-                    { name: "FaceExpressions", net: faceapi.nets.faceExpressionNet },
-                    { name: "AgeGenderNet", net: faceapi.nets.ageGenderNet }
+                // Sequentielles Laden der KI-Kerne
+                const tasks = [
+                    { n: "DETECTION_CORE", net: faceapi.nets.tinyFaceDetector },
+                    { n: "EMOTION_ENGINE", net: faceapi.nets.faceExpressionNet },
+                    { n: "BIO_ANALYTIC_NET", net: faceapi.nets.ageGenderNet }
                 ];
 
-                for (let i = 0; i < models.length; i++) {
-                    const perc = Math.round(((i + 1) / models.length) * 100);
-                    log(`CORE: Loading ${models[i].name}...`);
-                    await models[i].net.loadFromUri(MODEL_URL);
-                    progressFill.style.width = perc + "%";
-                    loadingPercent.innerText = perc + "%";
+                for (let i = 0; i < tasks.length; i++) {
+                    loadStatus.innerText = `LOADING ${tasks[i].n}...`;
+                    log(`CORE: Fetching ${tasks[i].n} weights...`);
+                    await tasks[i].net.loadFromUri(MODEL_URL);
+                    progressFill.style.width = ((i + 1) / tasks.length * 100) + "%";
                 }
 
-                log("CORE: All models active. Ready.");
-                loadingScreen.style.display = 'none';
-                startAnalysis();
+                log("SYSTEM: All modules synchronized.", true);
+                setTimeout(() => {
+                    bootScreen.style.display = 'none';
+                    radar.style.display = 'block';
+                    startAnalysis();
+                }, 500);
 
             } catch (err) {
-                log("FATAL ERROR: " + err.message);
-                loadingScreen.innerHTML = `<div style="color:red">ERROR: ${err.message}</div>`;
+                log("CRITICAL ERROR: " + err.message, true);
+                loadStatus.innerText = "BOOT FAILURE";
+                loadStatus.style.color = "red";
             }
         }
 
-        async function startAnalysis() {
+        function startAnalysis() {
             const canvas = faceapi.createCanvasFromMedia(video);
             document.getElementById('wrapper').append(canvas);
             const displaySize = { width: video.offsetWidth, height: video.offsetHeight };
             faceapi.matchDimensions(canvas, displaySize);
 
-            log("ANALYSIS: Neural Engine started (Input: 128px)");
+            log("READY: Scan engine live.");
 
             setInterval(async () => {
-                const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 128 }))
+                const options = new faceapi.TinyFaceDetectorOptions({ inputSize: 128, scoreThreshold: 0.5 });
+                const detections = await faceapi.detectAllFaces(video, options)
                     .withFaceExpressions()
                     .withAgeAndGender();
 
@@ -149,14 +182,17 @@
                         const { detection, age, gender, expressions } = result;
                         const emotion = Object.keys(expressions).reduce((a, b) => expressions[a] > expressions[b] ? a : b);
                         
+                        // Orange Box mit Ecken-Design
+                        const { x, y, width, height } = detection.box;
                         ctx.strokeStyle = '#ff4d00';
                         ctx.lineWidth = 2;
-                        ctx.strokeRect(detection.box.x, detection.box.y, detection.box.width, detection.box.height);
-
-                        log(`TARGET: ${gender.toUpperCase()} | ${Math.round(age)}Y | ${emotion.toUpperCase()}`);
+                        ctx.strokeRect(x, y, width, height);
+                        
+                        // Daten im Terminal
+                        log(`LOCK: ${gender.toUpperCase()} | ${Math.round(age)}y | ${emotion.toUpperCase()}`, true);
                     });
                 }
-            }, 200);
+            }, 250);
         }
     </script>
 </body>
