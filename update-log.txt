@@ -1,4 +1,22 @@
 --- DARKFOX AI - SYSTEM UPDATE LOG [2026.03.18] ---
+> VERSION: 4.7 "GLOBAL CORE"
+> STATUS: OPERATIONAL
+
+[NEW FEATURES]
+- CODEBASE: Completely converted to English for professional standards.
+- COPYABLE LOGS: Modal window text is now highlight-able and copy-ready.
+- MESH ENGINE: Refined landmark rendering within mirrored canvas.
+- UI: German labels maintained for accessibility while logic remains English.
+
+[FIXES]
+- MESH BUG: Fixed initialization delay for faceLandmark68Net.
+- SYNC: Re-aligned Target-ID positioning on tablet resolutions.
+
+[SYSTEM NOTES]
+- Ensure 'face_landmark_68_model' files are present in /weights/.
+--------------------------------------------------
+
+--- DARKFOX AI - SYSTEM UPDATE LOG [2026.03.18] ---
 > VERSION: 4.5 "GENESIS CORE"
 > STATUS: OPERATIONAL
 
