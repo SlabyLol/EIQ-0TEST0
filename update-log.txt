@@ -1,4 +1,22 @@
 --- DARKFOX AI - SYSTEM UPDATE LOG [2026.03.18] ---
+> VERSION: 4.8 "UNIFIED INTERFACE"
+> STATUS: OPERATIONAL
+
+[NEW FEATURES]
+- FULL ENGLISH: All UI labels and source code strings converted to English.
+- SCROLLABLE LOG: Integrated a custom styled scrollbar for long update logs.
+- COPY READY: Enabled 'user-select: all' for the modal text area.
+- UI: Floating Dual-Controls (Mesh/Log) refined for modern browsers.
+
+[FIXES]
+- OVERFLOW: Fixed text clipping in the update log modal.
+- RENDERING: Corrected landmark alignment during mirror-mode canvas resizing.
+
+[SYSTEM NOTES]
+- The update-log.txt file must remain in the root directory for the live fetch.
+--------------------------------------------------
+
+--- DARKFOX AI - SYSTEM UPDATE LOG [2026.03.18] ---
 > VERSION: 4.7 "GLOBAL CORE"
 > STATUS: OPERATIONAL
 
