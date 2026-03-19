@@ -1,4 +1,19 @@
 --- DARKFOX AI - SYSTEM UPDATE LOG [2026.03.19] ---
+> VERSION: 6.2 "ULTIMATE ALIGNMENT FIX"
+> STATUS: FULLY OPERATIONAL
+
+[CRITICAL BUG FIXES]
+- ASPECT RATIO CROP: Removed 'object-fit: cover'. The video container now dynamically shapes itself to match the camera's true aspect ratio (e.g., 16:9 or 4:3).
+- COORDINATE DRIFT: Canvas and Video now utilize 'videoWidth' & 'videoHeight' to ensure 1:1 pixel-perfect mapping. The box and mesh will no longer drift or miss the face.
+- MESH RESTORATION: Reverted to native face-api.js landmark drawing options for perfect line formation, colored in Cyber-Green (#00ff66).
+- TEXT MIRROR MATH: ID tags now correctly position themselves on the top-left of the bounding box while maintaining left-to-right readability on a mirrored axis.
+
+[SYSTEM NOTES]
+- HTML structure fully compiled into a single copy-paste block.
+- Web3Forms Bug system active and verified.
+--------------------------------------------------
+
+--- DARKFOX AI - SYSTEM UPDATE LOG [2026.03.19] ---
 > VERSION: 6.0 "MESH PRECISION"
 > STATUS: OPERATIONAL
 
