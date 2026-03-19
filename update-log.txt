@@ -1,4 +1,21 @@
 --- DARKFOX AI - SYSTEM UPDATE LOG [2026-03-19] ---
+> VERSION: 6.6 "FORT KNOX BUILD"
+> STATUS: FULLY STABILIZED
+
+[ENGINE UPDATES]
+- NEW MESH GEOMETRY: Landmarks are now connected by a vector-path algorithm to create a visible "Face-Net".
+- FRAME BUFFER FIX: Introduced mandatory requestAnimationFrame sync to prevent "ghosting" or frozen meshes.
+- LAYER RESTRUCTURE: Z-Index 100 assigned to boot sequence to prevent camera-bleed through the logo.
+
+[FIXED BUGS]
+- MESH FREEZE: Landmarked results are now strictly re-calculated per frame. Toggle-Switch state is verified at the start of every render call.
+- TRACKING DRIFT: Aspect ratio for the canvas is now relative to 'offsetWidth', ensuring precise alignment on all screen sizes.
+
+[SYSTEM NOTES]
+- System ready for deployment. All assets linked.
+--------------------------------------------------
+
+--- DARKFOX AI - SYSTEM UPDATE LOG [2026-03-19] ---
 > VERSION: 6.4 "TRACKING & BOX RESCUE"
 > STATUS: FULLY OPERATIONAL
 
