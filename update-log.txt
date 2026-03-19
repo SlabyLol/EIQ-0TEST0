@@ -1,4 +1,21 @@
 --- DARKFOX AI - SYSTEM UPDATE LOG [2026-03-19] ---
+> VERSION: 6.7 "GLOBAL KERNEL EDITION"
+> STATUS: FULLY OPERATIONAL (ENGLISH)
+
+[NEW FEATURES]
+- GLOBAL LOCALIZATION: All terminal outputs, UI badges, and labels translated to English for international deployment.
+- BUG REPORT SYSTEM: Fully functional modal with Web3Forms integration. 
+- UPDATE LOG VIEWER: Dynamic text retrieval from 'update-log.txt' with fallback error handling.
+
+[ENGINE UPDATES]
+- 3D MESH TOGGLE: Stabilized landmark rendering to prevent freezing during toggle state changes.
+- FRAME RECOVERY: Implemented a strict 'ctx.clearRect' call to ensure the overlay stays clean when a target is lost.
+
+[SYSTEM NOTES]
+- All kernel modules synced. Hardware acceleration active.
+--------------------------------------------------
+
+--- DARKFOX AI - SYSTEM UPDATE LOG [2026-03-19] ---
 > VERSION: 6.6 "FORT KNOX BUILD"
 > STATUS: FULLY STABILIZED
 
