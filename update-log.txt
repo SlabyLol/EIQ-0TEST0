@@ -1,3 +1,19 @@
+--- DARKFOX AI - SYSTEM UPDATE LOG [2026-03-19] ---
+> VERSION: 6.4 "TRACKING & BOX RESCUE"
+> STATUS: FULLY OPERATIONAL
+
+[CRITICAL FIXES]
+- TRACKING CRASH RESOLVED: The AI loop now waits strictly for the 'video.play()' event. It uses `video.offsetWidth` instead of raw metadata, preventing 0-pixel crashes on mobile and slower browsers.
+- BOX VISIBILITY: The cyan target box drawing logic has been separated and is now guaranteed to render whenever a face is detected, independent of other settings.
+
+[FEATURES VERIFIED]
+- 3D MESH TOGGLE: The Cyber-Green 3D Mesh is active and connected via the "3D Mesh OFF/ON" button in the bottom right corner overlay. Lines are slightly thickened for better visibility.
+- CSS MIRROR MATH: Canvas scale matching refined. Text renders properly without inverted spelling.
+
+[SYSTEM NOTES]
+- Build fully assembled. Ready for GitHub push.
+--------------------------------------------------
+
 --- DARKFOX AI - SYSTEM UPDATE LOG [2026.03.19] ---
 > VERSION: 6.3 "UI & BOOT RESTORATION"
 > STATUS: FULLY OPERATIONAL
