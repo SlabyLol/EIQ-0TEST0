@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DarkFox AI - Terminal v6.6</title>
+    <title>DarkFox AI - Terminal v6.7</title>
     <script src="dist/face-api.min.js"></script>
     <style>
         :root { 
@@ -18,60 +18,85 @@
         }
         .main-container { width: 95vw; max-width: 720px; display: flex; flex-direction: column; gap: 10px; z-index: 5; }
         
-        /* FIX: Robust Viewport with explicit Z-Indexing */
+        /* VIEWPORT */
         .viewport { 
             position: relative; width: 100%; aspect-ratio: 4/3; min-height: 320px;
             background: #000; border-radius: 12px; overflow: hidden; border: 2px solid var(--border);
             box-shadow: 0 0 40px rgba(94, 252, 255, 0.2);
         }
-        
         video { position: absolute; inset: 0; width: 100%; height: 100%; transform: scaleX(-1); object-fit: cover; z-index: 1; }
         canvas { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 5; transform: scaleX(-1); pointer-events: none; }
         
-        /* BOOT SCREEN ALWAYS ON TOP */
+        /* MODALS */
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 500; align-items: center; justify-content: center; padding: 20px; }
+        .modal-content { background: var(--panel); border: 1px solid var(--border); width: 100%; max-width: 500px; padding: 25px; border-radius: 12px; position: relative; box-shadow: 0 0 50px rgba(0,0,0,1); }
+        .close-x { position: absolute; top: 15px; right: 15px; color: #445566; cursor: pointer; font-size: 24px; }
+        .bug-input { width: 100%; background: #010409; border: 1px solid var(--border); color: #fff; padding: 12px; margin-bottom: 10px; font-family: monospace; outline: none; }
+        
+        /* BOOT SCREEN */
         #boot-screen { position: absolute; inset: 0; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; transition: opacity 0.5s; }
-        .boot-logo { width: 140px; height: 140px; border-radius: 50%; border: 3px solid var(--accent); box-shadow: 0 0 30px var(--accent); margin-bottom: 30px; object-fit: cover; }
+        .boot-logo { width: 130px; height: 130px; border-radius: 50%; border: 2px solid var(--accent); margin-bottom: 25px; box-shadow: 0 0 20px var(--accent); }
         
-        .badge { position: absolute; z-index: 20; background: rgba(0,0,0,0.85); padding: 6px 14px; border-radius: 4px; font-size: 11px; border: 1px solid var(--accent); color: var(--accent); font-weight: 900; pointer-events: none; }
-        #mode-display { top: 12px; left: 12px; }
-        #target-count { top: 12px; right: 12px; color: var(--warning); border-color: var(--warning); }
+        /* UI ELEMENTS */
+        .badge { position: absolute; z-index: 20; background: rgba(0,0,0,0.8); padding: 6px 12px; border-radius: 4px; font-size: 10px; border: 1px solid var(--accent); color: var(--accent); font-weight: bold; }
+        #mode-display { top: 10px; left: 10px; }
+        #target-count { top: 10px; right: 10px; color: var(--warning); border-color: var(--warning); }
         
-        .btn-main { padding: 14px 28px; background: transparent; color: var(--accent); border: 2px solid var(--accent); border-radius: 4px; font-weight: 800; cursor: pointer; text-transform: uppercase; letter-spacing: 2px; transition: 0.3s; }
-        .btn-main:hover { background: var(--accent); color: #000; box-shadow: 0 0 25px var(--accent); }
-        
-        .controls-container { position: fixed; bottom: 20px; right: 20px; z-index: 200; display: flex; flex-direction: column; gap: 10px; }
-        .ctrl-btn { background: rgba(0,0,0,0.9); padding: 12px 18px; border-radius: 4px; font-size: 10px; font-weight: bold; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; border: 1px solid var(--border); min-width: 150px; text-align: left; }
+        .controls-container { position: fixed; bottom: 20px; right: 20px; z-index: 200; display: flex; flex-direction: column; gap: 8px; }
+        .ctrl-btn { background: rgba(0,0,0,0.85); padding: 10px 15px; border-radius: 4px; font-size: 10px; font-weight: bold; cursor: pointer; text-transform: uppercase; border: 1px solid var(--border); min-width: 160px; text-align: left; transition: 0.2s; }
         #btn-mesh { color: var(--mesh-btn); border-color: var(--mesh-btn); }
-        #btn-mesh.active { background: var(--mesh-btn); color: #000; box-shadow: 0 0 20px var(--mesh-btn); }
+        #btn-mesh.active { background: var(--mesh-btn); color: #000; box-shadow: 0 0 15px var(--mesh-btn); }
         #btn-bug { color: var(--bug-btn); border-color: var(--bug-btn); }
         #btn-log { color: var(--log-btn); border-color: var(--log-btn); }
         
+        .btn-submit { width: 100%; padding: 12px; background: transparent; border: 1px solid var(--accent); color: var(--accent); cursor: pointer; font-weight: bold; text-transform: uppercase; }
+        .btn-submit:hover { background: var(--accent); color: #000; }
+
         .data-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
-        .data-card { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 15px; text-align: center; }
-        .tag { font-size: 10px; color: var(--accent); font-weight: bold; display: block; margin-bottom: 5px; }
-        .val { font-size: 16px; font-weight: 900; color: #fff; }
+        .data-card { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 12px; text-align: center; }
+        .tag { font-size: 9px; color: var(--accent); font-weight: bold; display: block; }
+        .val { font-size: 14px; font-weight: 900; }
         
-        .terminal { background: #010409; border-radius: 8px; padding: 12px; height: 130px; overflow-y: auto; font-size: 11px; color: #556677; border: 1px solid var(--border); }
-        .term-line { margin-bottom: 5px; line-height: 1.4; border-left: 2px solid transparent; padding-left: 8px; }
-        .term-success { border-left-color: var(--mesh-btn); color: #aaffaa; }
+        .terminal { background: #010409; border-radius: 8px; padding: 12px; height: 120px; overflow-y: auto; font-size: 10px; color: #556677; border: 1px solid var(--border); }
     </style>
 </head>
 <body>
 
     <div class="controls-container">
-        <button id="btn-bug" class="ctrl-btn" onclick="alert('Bug Report System: Active')">[!] Emergency Report</button>
-        <button id="btn-mesh" class="ctrl-btn" onclick="toggleMesh()">3D Mesh: DISABLED</button>
-        <button id="btn-log" class="ctrl-btn">Update-Log.txt</button>
+        <button id="btn-bug" class="ctrl-btn" onclick="openModal('modal-bug')">[!] Report Bug</button>
+        <button id="btn-mesh" class="ctrl-btn" onclick="toggleMesh()">3D Mesh: OFF</button>
+        <button id="btn-log" class="ctrl-btn" onclick="loadLogs()">Update-Log.txt</button>
+    </div>
+
+    <div id="modal-bug" class="modal">
+        <div class="modal-content" style="border-color: var(--bug-btn);">
+            <span class="close-x" onclick="closeModal('modal-bug')">&times;</span>
+            <h3 style="color: var(--bug-btn); margin-bottom: 15px;">BUG REPORT SYSTEM</h3>
+            <form id="bug-form">
+                <input type="hidden" name="access_key" value="c387b391-5ee4-4fa0-98d6-2617c48f38f5">
+                <input type="text" name="name" class="bug-input" placeholder="User Name" required>
+                <textarea name="message" class="bug-input" style="height: 100px;" placeholder="Describe the error..." required></textarea>
+                <button type="submit" class="btn-submit" style="border-color: var(--bug-btn); color: var(--bug-btn);">Send to DarkFox</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-log" class="modal">
+        <div class="modal-content" style="border-color: var(--log-btn);">
+            <span class="close-x" onclick="closeModal('modal-log')">&times;</span>
+            <h3 style="color: var(--log-btn); margin-bottom: 15px;">SYSTEM UPDATE LOGS</h3>
+            <div id="log-content" style="font-size: 11px; white-space: pre-wrap; color: #8899aa; max-height: 300px; overflow-y: auto;">Loading logs...</div>
+        </div>
     </div>
 
     <div class="main-container">
         <div class="viewport" id="cam-wrapper">
-            <div class="badge" id="mode-display">SYSTEM: OFFLINE</div>
+            <div class="badge" id="mode-display">SYSTEM: STANDBY</div>
             <div class="badge" id="target-count">TARGETS: 0</div>
             
             <div id="boot-screen">
-                <img src="IMG_0643.jpeg" class="boot-logo" onerror="this.src='https://via.placeholder.com/140?text=DarkFox+Logo'">
-                <button class="btn-main" id="boot-btn" onclick="initEngine()">Initialize DarkFox AI</button>
+                <img src="IMG_0643.jpeg" class="boot-logo" onerror="this.src='https://via.placeholder.com/130?text=DarkFox'">
+                <button class="btn-submit" id="boot-btn" onclick="initAI()" style="width: auto; padding: 12px 30px;">Initialize AI</button>
             </div>
             
             <video id="video-feed" autoplay muted playsinline></video>
@@ -79,12 +104,12 @@
         
         <div class="data-grid">
             <div class="data-card"><span class="tag">BIOMETRY</span><span id="out-gender" class="val">--</span></div>
-            <div class="data-card"><span class="tag">AGE_EST</span><span id="out-age" class="val">--</span></div>
-            <div class="data-card"><span class="tag">AFFECT</span><span id="out-emotion" class="val">--</span></div>
+            <div class="data-card"><span class="tag">AGE</span><span id="out-age" class="val">--</span></div>
+            <div class="data-card"><span class="tag">EMOTION</span><span id="out-emotion" class="val">--</span></div>
         </div>
         
         <div class="terminal" id="term-out">
-            <div class="term-line">> DARKFOX AI KERNEL READY. AWAITING USER AUTH...</div>
+            <div>[READY] Waiting for kernel boot...</div>
         </div>
     </div>
 
@@ -92,27 +117,46 @@
         const video = document.getElementById('video-feed');
         const term = document.getElementById('term-out');
         let canvas, ctx, meshActive = false;
-        let nextId = 1;
 
-        function log(msg, type = '') {
+        function log(msg) {
             const div = document.createElement('div');
-            div.className = `term-line ${type}`;
-            div.innerHTML = `[${new Date().toLocaleTimeString()}] > ${msg}`;
+            div.innerHTML = `> [${new Date().toLocaleTimeString()}] ${msg}`;
             term.appendChild(div);
             term.scrollTop = term.scrollHeight;
         }
 
-        function toggleMesh() {
-            meshActive = !meshActive;
-            const btn = document.getElementById('btn-mesh');
-            btn.innerText = meshActive ? "3D Mesh: ACTIVE" : "3D Mesh: DISABLED";
-            btn.classList.toggle('active');
-            log(`MESH ENGINE ${meshActive ? 'STARTED' : 'STOPPED'}`, 'term-success');
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        async function loadLogs() {
+            openModal('modal-log');
+            try {
+                const res = await fetch('update-log.txt');
+                document.getElementById('log-content').innerText = res.ok ? await res.text() : "Could not find update-log.txt on server.";
+            } catch (e) { document.getElementById('log-content').innerText = "Network error loading logs."; }
         }
 
-        async function initEngine() {
-            document.getElementById('boot-btn').innerText = "CALIBRATING...";
-            log("Loading Neural Weights...");
+        function toggleMesh() {
+            meshActive = !meshActive;
+            const b = document.getElementById('btn-mesh');
+            b.innerText = meshActive ? "3D Mesh: ON" : "3D Mesh: OFF";
+            b.classList.toggle('active');
+            log(`Mesh Engine: ${meshActive ? 'Engaged' : 'Disengaged'}`);
+        }
+
+        document.getElementById('bug-form').onsubmit = async (e) => {
+            e.preventDefault();
+            log("Transmitting bug report...");
+            const res = await fetch('https://api.web3forms.com/submit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(Object.fromEntries(new FormData(e.target)))
+            });
+            if(res.ok) { log("Report delivered successfully."); closeModal('modal-bug'); }
+        };
+
+        async function initAI() {
+            document.getElementById('boot-btn').innerText = "BOOTING...";
             const PATH = './weights/';
             try {
                 await Promise.all([
@@ -121,100 +165,53 @@
                     faceapi.nets.faceExpressionNet.loadFromUri(PATH),
                     faceapi.nets.ageGenderNet.loadFromUri(PATH)
                 ]);
-                log("Neural Networks: ONLINE", "term-success");
                 const stream = await navigator.mediaDevices.getUserMedia({ video: true });
                 video.srcObject = stream;
-            } catch (e) { log("CRITICAL ERROR: Weights or Camera missing."); }
+            } catch (e) { log("CRITICAL: Init failed."); }
         }
 
-        video.addEventListener('play', () => {
-            document.getElementById('boot-screen').style.opacity = '0';
-            setTimeout(() => document.getElementById('boot-screen').style.display = 'none', 500);
+        video.onplay = () => {
+            document.getElementById('boot-screen').style.display = 'none';
             document.getElementById('mode-display').innerText = "SYSTEM: LIVE";
-            
             canvas = faceapi.createCanvasFromMedia(video);
             document.getElementById('cam-wrapper').append(canvas);
             ctx = canvas.getContext('2d');
 
-            const process = async () => {
-                const displaySize = { width: video.offsetWidth, height: video.offsetHeight };
-                if (canvas.width !== displaySize.width) faceapi.matchDimensions(canvas, displaySize);
+            const render = async () => {
+                const dims = { width: video.offsetWidth, height: video.offsetHeight };
+                if (canvas.width !== dims.width) faceapi.matchDimensions(canvas, dims);
 
-                const results = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 224 }))
+                const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 224 }))
                     .withFaceLandmarks().withFaceExpressions().withAgeAndGender();
 
-                const scaledResults = faceapi.resizeResults(results, displaySize);
-                
-                // 1. HARD CLEAR EVERY FRAME
+                const scaled = faceapi.resizeResults(detections, dims);
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-                scaledResults.forEach(res => {
+                scaled.forEach(res => {
                     const box = res.detection.box;
-
-                    // 2. ALWAYS DRAW TARGET BOX
                     ctx.strokeStyle = '#5efcff';
-                    ctx.lineWidth = 3;
-                    ctx.setLineDash([5, 5]); // Cyber-look dash
+                    ctx.lineWidth = 2;
                     ctx.strokeRect(box.x, box.y, box.width, box.height);
-                    ctx.setLineDash([]); // Reset
 
-                    // 3. DRAW MESH (ONLY IF ACTIVE)
                     if (meshActive) {
                         ctx.fillStyle = '#00ff66';
-                        ctx.strokeStyle = '#00ff66';
-                        ctx.lineWidth = 1;
-                        const landmarks = res.landmarks.positions;
-                        
-                        // Drawing points
-                        landmarks.forEach(p => {
-                            ctx.beginPath();
-                            ctx.arc(p.x, p.y, 1.5, 0, 2 * Math.PI);
-                            ctx.fill();
+                        res.landmarks.positions.forEach(p => {
+                            ctx.beginPath(); ctx.arc(p.x, p.y, 1.2, 0, 2*Math.PI); ctx.fill();
                         });
-
-                        // Drawing connector lines for "3D" feel
-                        const drawPath = (from, to) => {
-                            ctx.beginPath();
-                            for(let i=from; i<to; i++) {
-                                ctx.moveTo(landmarks[i].x, landmarks[i].y);
-                                ctx.lineTo(landmarks[i+1].x, landmarks[i+1].y);
-                            }
-                            ctx.stroke();
-                        };
-
-                        drawPath(0, 16);  // Jaw
-                        drawPath(17, 21); // Left eyebrow
-                        drawPath(22, 26); // Right eyebrow
-                        drawPath(27, 35); // Nose
-                        drawPath(36, 41); // Left eye
-                        ctx.lineTo(landmarks[36].x, landmarks[36].y); ctx.stroke(); // Close eye
-                        drawPath(42, 47); // Right eye
-                        ctx.lineTo(landmarks[42].x, landmarks[42].y); ctx.stroke(); // Close eye
-                        drawPath(48, 59); // Outer Mouth
-                        ctx.lineTo(landmarks[48].x, landmarks[48].y); ctx.stroke();
                     }
-
-                    // 4. DRAW MIRRORED TAGS
-                    ctx.save();
-                    ctx.scale(-1, 1);
-                    ctx.font = 'bold 14px monospace';
-                    ctx.fillStyle = '#5efcff';
-                    ctx.fillText(`TRK_ID_${nextId}`, -(box.x + box.width), box.y - 12);
-                    ctx.restore();
                 });
 
-                document.getElementById('target-count').innerText = `TARGETS: ${results.length}`;
-                if(results.length > 0) {
-                    const top = scaledResults[0];
-                    document.getElementById('out-gender').innerText = top.gender.toUpperCase();
-                    document.getElementById('out-age').innerText = Math.round(top.age) + " YRS";
-                    document.getElementById('out-emotion').innerText = Object.keys(top.expressions).reduce((a,b)=>top.expressions[a]>top.expressions[b]?a:b).toUpperCase();
+                document.getElementById('target-count').innerText = `TARGETS: ${detections.length}`;
+                if(detections.length > 0) {
+                    const d = scaled[0];
+                    document.getElementById('out-gender').innerText = d.gender.toUpperCase();
+                    document.getElementById('out-age').innerText = Math.round(d.age) + " Y";
+                    document.getElementById('out-emotion').innerText = Object.keys(d.expressions).reduce((a,b)=>d.expressions[a]>d.expressions[b]?a:b).toUpperCase();
                 }
-
-                requestAnimationFrame(process);
+                requestAnimationFrame(render);
             };
-            process();
-        });
+            render();
+        };
     </script>
 </body>
 </html>
