@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DarkFox AI - Terminal v6.3</title>
+    <title>DarkFox AI - Terminal v6.4</title>
     <script src="dist/face-api.min.js"></script>
     <style>
         :root { 
@@ -18,28 +18,30 @@
         }
         .main-container { width: 95vw; max-width: 720px; display: flex; flex-direction: column; gap: 10px; z-index: 5; }
         
-        /* VIEWPORT FIX: Added min-height and default aspect ratio so the boot screen is visible! */
+        /* THE ROCK-SOLID VIEWPORT */
         .viewport { 
             position: relative; width: 100%; aspect-ratio: 4/3; min-height: 300px;
             background: #000; border-radius: 12px; overflow: hidden; border: 2px solid var(--border);
             box-shadow: 0 0 40px rgba(94, 252, 255, 0.15);
         }
         
-        video { position: absolute; inset: 0; width: 100%; height: 100%; transform: scaleX(-1); display: block; object-fit: contain; }
+        /* CSS MIRRORING (100% stable overlay) */
+        video { position: absolute; inset: 0; width: 100%; height: 100%; transform: scaleX(-1); object-fit: cover; }
         canvas { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 10; transform: scaleX(-1); pointer-events: none; }
         
         .badge { position: absolute; z-index: 20; background: rgba(0,0,0,0.85); padding: 6px 14px; border-radius: 4px; font-size: 11px; border: 1px solid var(--accent); color: var(--accent); font-weight: 900; }
         #mode-display { top: 12px; left: 12px; }
         #target-count { top: 12px; right: 12px; color: var(--warning); border-color: var(--warning); }
         
-        /* BOOT SCREEN RESTORED */
+        /* BOOT SCREEN */
         #boot-screen { position: absolute; inset: 0; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; transition: opacity 0.8s; }
         .boot-logo { width: 130px; height: 130px; border-radius: 50%; box-shadow: 0 0 30px var(--accent); margin-bottom: 25px; object-fit: cover; }
         .btn-main { padding: 12px 24px; background: transparent; color: var(--accent); border: 1px solid var(--accent); border-radius: 4px; font-weight: 800; cursor: pointer; text-transform: uppercase; letter-spacing: 2px; font-size: 11px; transition: 0.3s; }
         .btn-main:hover { background: var(--accent); color: #000; box-shadow: 0 0 20px var(--accent); }
         
+        /* CONTROLS (Moved slightly inward so they are always visible) */
         .controls-container { position: fixed; bottom: 20px; right: 20px; z-index: 200; display: flex; flex-direction: column; gap: 8px; }
-        .ctrl-btn { background: rgba(0,0,0,0.85); padding: 10px 15px; border-radius: 4px; font-size: 10px; font-weight: bold; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; transition: 0.2s; min-width: 140px; text-align: left; }
+        .ctrl-btn { background: rgba(0,0,0,0.85); padding: 10px 15px; border-radius: 4px; font-size: 10px; font-weight: bold; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; transition: 0.2s; min-width: 140px; text-align: left; box-shadow: 0 4px 6px rgba(0,0,0,0.5); }
         #btn-bug { color: var(--bug-btn); border: 1px solid var(--bug-btn); }
         #btn-mesh { color: var(--mesh-btn); border: 1px solid var(--mesh-btn); }
         #btn-mesh.active { background: var(--mesh-btn); color: #000; box-shadow: 0 0 15px var(--mesh-btn); }
@@ -55,7 +57,6 @@
         .tag { font-size: 9px; color: var(--accent); font-weight: bold; }
         .val { font-size: 15px; font-weight: 900; display: block; margin-top: 4px; }
         
-        /* LIVE DEBUG CONSOLE */
         .terminal { background: #010409; border-radius: 8px; padding: 10px; height: 120px; overflow-y: auto; font-size: 10px; color: #445566; border: 1px solid var(--border); scroll-behavior: smooth; }
         .term-line { margin-bottom: 4px; }
         .term-time { color: var(--log-btn); margin-right: 5px; }
@@ -121,36 +122,32 @@
         let canvas, ctx, meshEnabled = false;
         let nextFaceId = 1, trackedFaces = [], lastSeenTime = Date.now();
 
-        // Terminal Output (Auto-Scroll)
         function printTerm(msg) {
             const div = document.createElement('div');
             div.className = 'term-line';
             div.innerHTML = `<span class="term-time">[${new Date().toLocaleTimeString()}]</span> > ${msg}`;
             term.appendChild(div);
-            term.scrollTop = term.scrollHeight; // Auto-scrollt nach unten
+            term.scrollTop = term.scrollHeight;
         }
 
-        // Modals
         function toggleModal(id, show) { document.getElementById(id).style.display = show ? 'flex' : 'none'; }
 
         async function loadLogFile() {
             toggleModal('modal-log', true);
             try {
                 const res = await fetch('update-log.txt');
-                document.getElementById('log-body').innerText = res.ok ? await res.text() : "Log file not found on server.";
+                document.getElementById('log-body').innerText = res.ok ? await res.text() : "Log file not found.";
             } catch (e) { document.getElementById('log-body').innerText = "Fetch error."; }
         }
 
-        // 3D Mesh Toggle
         function toggleMesh() {
             meshEnabled = !meshEnabled;
             const b = document.getElementById('btn-mesh');
             b.innerText = meshEnabled ? "3D Mesh ON" : "3D Mesh OFF";
             b.classList.toggle('active');
-            printTerm(`ENGINE: 3D Mesh ${meshEnabled ? 'ENABLED' : 'DISABLED'}`);
+            printTerm(`ENGINE: 3D Mesh Override -> ${meshEnabled ? 'ACTIVE' : 'INACTIVE'}`);
         }
 
-        // Web3Forms Bug Report
         document.getElementById('bug-form').addEventListener('submit', async function(e) {
             e.preventDefault();
             const btn = e.target.querySelector('button'); btn.innerText = "SENDING..."; btn.disabled = true;
@@ -168,7 +165,6 @@
             } catch (err) { printTerm("FATAL: Send failed."); btn.disabled = false; }
         });
 
-        // Initialize AI
         async function startEngine() {
             document.getElementById('boot-btn').innerText = "LOADING AI...";
             printTerm("CORE: Accessing neural weights...");
@@ -180,45 +176,43 @@
                     faceapi.nets.faceExpressionNet.loadFromUri(PATH),
                     faceapi.nets.ageGenderNet.loadFromUri(PATH)
                 ]);
-                printTerm("CORE: Neural network loaded. Starting camera...");
+                printTerm("CORE: Weights loaded. Establishing camera link...");
                 const stream = await navigator.mediaDevices.getUserMedia({ video: true });
                 video.srcObject = stream;
-                
-                // WAIT FOR VIDEO METADATA TO FIX ALIGNMENT
-                video.onloadedmetadata = () => {
-                    const ratio = video.videoWidth / video.videoHeight;
-                    document.getElementById('cam-wrapper').style.aspectRatio = ratio;
-                    
-                    document.getElementById('boot-screen').style.opacity = '0';
-                    setTimeout(() => document.getElementById('boot-screen').style.display = 'none', 800);
-                    
-                    document.getElementById('mode-display').innerText = "ENGINE: LIVE";
-                    printTerm("CAMERA: Feed established. Starting detection loop.");
-                    runProcessing();
-                };
-            } catch (err) { printTerm("ERROR: Could not load AI or Camera."); document.getElementById('boot-btn').innerText = "ERROR"; }
+            } catch (err) { 
+                printTerm("ERROR: Could not load AI or Camera."); 
+                document.getElementById('boot-btn').innerText = "ERROR"; 
+            }
         }
 
-        // Main AI Loop
-        async function runProcessing() {
+        // WAIT FOR VIDEO TO ACTUALLY PLAY BEFORE STARTING THE LOOP (CRITICAL FIX)
+        video.addEventListener('play', () => {
+            document.getElementById('boot-screen').style.opacity = '0';
+            setTimeout(() => document.getElementById('boot-screen').style.display = 'none', 800);
+            
+            document.getElementById('mode-display').innerText = "ENGINE: LIVE";
+            printTerm("CAMERA: Feed established. Starting detection loop.");
+            
             canvas = faceapi.createCanvasFromMedia(video);
             document.getElementById('cam-wrapper').append(canvas);
             ctx = canvas.getContext('2d');
 
             const loop = async () => {
-                const dims = { width: video.videoWidth, height: video.videoHeight };
-                faceapi.matchDimensions(canvas, dims);
+                // FALLBACK: Use visible offsetWidth/Height so it never crashes on 0
+                const displaySize = { width: video.offsetWidth, height: video.offsetHeight };
+                if (canvas.width !== displaySize.width) {
+                    faceapi.matchDimensions(canvas, displaySize);
+                }
 
                 const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.4 }))
                     .withFaceLandmarks().withFaceExpressions().withAgeAndGender();
 
-                const scaled = faceapi.resizeResults(detections, dims);
+                const scaled = faceapi.resizeResults(detections, displaySize);
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
 
                 if (scaled.length === 0) {
                     if (Date.now() - lastSeenTime > 5000 && nextFaceId !== 1) {
-                        nextFaceId = 1;
-                        printTerm("SYSTEM: Targets lost for 5s. ID sequence reset.");
+                        nextFaceId = 1; printTerm("SYSTEM: Targets lost for 5s. ID reset.");
                     }
                 } else {
                     lastSeenTime = Date.now();
@@ -231,15 +225,15 @@
                     let id = match ? match.id : nextFaceId++;
                     currentFrameFaces.push({ id, x: box.x, y: box.y });
 
-                    // 1. DRAW SCANNER BOX
+                    // 1. ALWAYS DRAW THE SCANNER BOX
                     ctx.strokeStyle = '#5efcff';
                     ctx.lineWidth = 3;
                     ctx.strokeRect(box.x, box.y, box.width, box.height);
 
-                    // 2. DRAW PERFECT 3D MESH
+                    // 2. DRAW 3D MESH ONLY IF BUTTON IS ACTIVE
                     if(meshEnabled) {
                         const drawOptions = new faceapi.draw.DrawFaceLandmarksOptions({ 
-                            lineWidth: 1.5, drawLines: true, color: '#00ff66'
+                            lineWidth: 2, drawLines: true, color: '#00ff66'
                         });
                         drawOptions.draw(canvas, item.landmarks);
                     }
@@ -266,7 +260,7 @@
                 requestAnimationFrame(loop);
             };
             loop();
-        }
+        });
     </script>
 </body>
 </html>
