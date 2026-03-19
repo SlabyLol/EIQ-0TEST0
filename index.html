@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DarkFox AI - Terminal v5.6</title>
+    <title>DarkFox AI - Terminal v5.8</title>
     <script src="dist/face-api.min.js"></script>
     <style>
         :root { 
@@ -39,7 +39,7 @@
         #btn-log { color: var(--log-btn); border: 1px solid var(--log-btn); }
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 300; align-items: center; justify-content: center; padding: 20px; }
         .modal-content { background: var(--panel); border: 1px solid var(--border); width: 100%; max-width: 500px; padding: 25px; border-radius: 12px; position: relative; }
-        #log-body { font-size: 11px; color: #8899aa; white-space: pre-wrap; max-height: 300px; overflow-y: auto; user-select: all; padding-right: 12px; }
+        #log-body { font-size: 11px; color: #8899aa; white-space: pre-wrap; max-height: 300px; overflow-y: auto; user-select: all; padding-right: 12px; line-height: 1.5; }
         #log-body::-webkit-scrollbar { width: 4px; }
         #log-body::-webkit-scrollbar-thumb { background: var(--log-btn); border-radius: 10px; }
         .bug-input { width: 100%; background: #010409; border: 1px solid var(--border); color: #fff; padding: 10px; margin-bottom: 10px; font-family: monospace; font-size: 12px; outline: none; }
@@ -62,14 +62,14 @@
     <div id="modal-bug" class="modal">
         <div class="modal-content" style="border-color: var(--bug-btn);">
             <span class="close-x" onclick="toggleModal('modal-bug', false)">&times;</span>
-            <div style="color:var(--bug-btn); font-weight:bold; margin-bottom:15px;">BUG REPORT SYSTEM</div>
+            <div style="color:var(--bug-btn); font-weight:bold; margin-bottom:15px; text-transform: uppercase;">Bug Report Console</div>
             <form id="bug-form">
                 <input type="hidden" name="access_key" value="c387b391-5ee4-4fa0-98d6-2617c48f38f5">
-                <input type="text" name="name" class="bug-input" placeholder="User Name" required>
-                <input type="email" id="bug-email" name="email" class="bug-input" placeholder="Contact Email" required>
-                <input type="text" name="subject" class="bug-input" placeholder="Subject" required>
-                <textarea name="message" class="bug-input" style="height: 80px; resize: none;" placeholder="Details..." required></textarea>
-                <button type="submit" class="btn-main" style="width: 100%; border-color: var(--bug-btn); color: var(--bug-btn);">Transmit Report</button>
+                <input type="text" name="name" class="bug-input" placeholder="Your Name" required>
+                <input type="email" id="bug-email" name="email" class="bug-input" placeholder="Your Email" required>
+                <input type="text" name="subject" class="bug-input" placeholder="Issue Subject" required>
+                <textarea name="message" class="bug-input" style="height: 80px; resize: none;" placeholder="Details regarding the bug..." required></textarea>
+                <button type="submit" class="btn-main" style="width: 100%; border-color: var(--bug-btn); color: var(--bug-btn);">Transmit to DarkFox</button>
             </form>
         </div>
     </div>
@@ -77,7 +77,8 @@
     <div id="modal-log" class="modal">
         <div class="modal-content" style="border-color: var(--log-btn);">
             <span class="close-x" onclick="toggleModal('modal-log', false)">&times;</span>
-            <div id="log-body">Loading...</div>
+            <div style="color:var(--log-btn); font-weight:bold; margin-bottom:10px;">REPOS: UPDATE-LOG.TXT</div>
+            <div id="log-body">Syncing...</div>
         </div>
     </div>
 
@@ -87,22 +88,24 @@
             <div class="badge" id="target-count">TARGETS: 0</div>
             <div id="boot-screen">
                 <img src="IMG_0643.jpeg" class="boot-logo">
-                <button class="btn-main" onclick="startEngine()">Initialize System</button>
+                <button class="btn-main" onclick="startEngine()">Initialize AI Core</button>
             </div>
             <video id="video-feed" autoplay muted playsinline></video>
         </div>
         <div class="data-grid">
-            <div class="data-card"><span class="tag">GENDER</span><span id="out-gender" class="val">--</span></div>
+            <div class="data-card"><span class="tag">PRIMARY SEX</span><span id="out-gender" class="val">--</span></div>
             <div class="data-card"><span class="tag">EST. AGE</span><span id="out-age" class="val">--</span></div>
             <div class="data-card"><span class="tag">EMOTION</span><span id="out-emotion" class="val">--</span></div>
         </div>
-        <div class="terminal" id="term-out">> SYSTEM READY.</div>
+        <div class="terminal" id="term-out">> SYSTEM READY. STANDING BY.</div>
     </div>
 
     <script>
         const video = document.getElementById('video-feed');
         const term = document.getElementById('term-out');
         let canvas, ctx, meshEnabled = false;
+        let nextFaceId = 1;
+        let trackedFaces = [];
 
         function printTerm(msg) {
             const div = document.createElement('div');
@@ -116,8 +119,8 @@
             toggleModal('modal-log', true);
             try {
                 const res = await fetch('update-log.txt');
-                document.getElementById('log-body').innerText = res.ok ? await res.text() : "Log not found.";
-            } catch (e) { document.getElementById('log-body').innerText = "Fetch error."; }
+                document.getElementById('log-body').innerText = res.ok ? await res.text() : "ERROR: Log file not found.";
+            } catch (e) { document.getElementById('log-body').innerText = "FETCH ERROR."; }
         }
 
         function toggleMesh() {
@@ -125,10 +128,9 @@
             const b = document.getElementById('btn-mesh');
             b.innerText = meshEnabled ? "3D Mesh ON" : "3D Mesh OFF";
             b.classList.toggle('active');
-            printTerm(`ENGINE: Mesh overlay ${meshEnabled ? 'ON' : 'OFF'}`);
+            printTerm(`ENGINE: Mesh visualization ${meshEnabled ? 'ENABLED' : 'DISABLED'}`);
         }
 
-        // WEB3FORMS AJAX HANDLER
         document.getElementById('bug-form').addEventListener('submit', async function(e) {
             e.preventDefault();
             const btn = e.target.querySelector('button');
@@ -145,15 +147,15 @@
                     body: json
                 });
                 if (res.ok) {
-                    printTerm("SUCCESS: Report sent to darkfox.tobias@outlook.com");
+                    printTerm("SUCCESS: Report delivered to darkfox.tobias@outlook.com");
                     e.target.reset();
-                    setTimeout(() => { toggleModal('modal-bug', false); btn.innerText = "Transmit Report"; btn.disabled = false; }, 2000);
+                    setTimeout(() => { toggleModal('modal-bug', false); btn.innerText = "Transmit to DarkFox"; btn.disabled = false; }, 2000);
                 }
             } catch (err) { printTerm("FATAL: Transmission failed."); btn.disabled = false; }
         });
 
         async function startEngine() {
-            printTerm("CORE: Loading weights...");
+            printTerm("CORE: Accessing neural weights...");
             try {
                 const PATH = './weights/';
                 await Promise.all([
@@ -167,33 +169,65 @@
                 video.onloadedmetadata = () => {
                     document.getElementById('boot-screen').style.opacity = '0';
                     setTimeout(() => document.getElementById('boot-screen').remove(), 800);
+                    document.getElementById('mode-display').innerText = "ENGINE: LIVE ANALYSIS";
                     runProcessing();
                 };
-            } catch(e) { printTerm("ERROR: " + e.message); }
+            } catch(e) { printTerm("FATAL ERROR: " + e.message); }
         }
 
         async function runProcessing() {
             canvas = faceapi.createCanvasFromMedia(video);
             document.getElementById('cam-wrapper').append(canvas);
             ctx = canvas.getContext('2d');
+
             const loop = async () => {
                 const dims = { width: video.offsetWidth, height: video.offsetHeight };
                 if (canvas.width !== dims.width) faceapi.matchDimensions(canvas, dims);
-                const data = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.4 }))
+
+                const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.4 }))
                     .withFaceLandmarks().withFaceExpressions().withAgeAndGender();
-                const scaled = faceapi.resizeResults(data, dims);
+
+                const scaled = faceapi.resizeResults(detections, dims);
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
-                if(scaled.length > 0) {
-                    const top = scaled[0];
-                    document.getElementById('out-gender').innerText = top.gender.toUpperCase();
-                    document.getElementById('out-age').innerText = Math.round(top.age) + " YRS";
-                    document.getElementById('out-emotion').innerText = Object.keys(top.expressions).reduce((a,b)=>top.expressions[a]>top.expressions[b]?a:b).toUpperCase();
-                    scaled.forEach((item, i) => {
-                        ctx.strokeStyle = '#5efcff'; ctx.lineWidth = 2;
-                        ctx.strokeRect(item.detection.box.x, item.detection.box.y, item.detection.box.width, item.detection.box.height);
-                        if(meshEnabled) faceapi.draw.drawFaceLandmarks(canvas, item);
+
+                let currentFrameFaces = [];
+                scaled.forEach(item => {
+                    const box = item.detection.box;
+                    let match = trackedFaces.find(prev => {
+                        const dist = Math.sqrt(Math.pow(prev.x - box.x, 2) + Math.pow(prev.y - box.y, 2));
+                        return dist < 100;
                     });
+
+                    let id = match ? match.id : nextFaceId++;
+                    currentFrameFaces.push({ id, x: box.x, y: box.y, box });
+
+                    // Draw Detection Box
+                    ctx.strokeStyle = '#5efcff';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(box.x, box.y, box.width, box.height);
+
+                    // Draw ID Label
+                    ctx.save();
+                    ctx.scale(-1, 1);
+                    ctx.fillStyle = '#5efcff';
+                    ctx.font = 'bold 12px monospace';
+                    ctx.fillText(`ID#00${id}`, -(box.x + 5), box.y - 10);
+                    ctx.restore();
+
+                    // Draw Mesh
+                    if(meshEnabled) faceapi.draw.drawFaceLandmarks(canvas, item);
+                });
+
+                trackedFaces = currentFrameFaces;
+                document.getElementById('target-count').innerText = `TARGETS: ${currentFrameFaces.length}`;
+
+                if(scaled.length > 0) {
+                    const p = scaled[0];
+                    document.getElementById('out-gender').innerText = p.gender.toUpperCase();
+                    document.getElementById('out-age').innerText = Math.round(p.age) + " YRS";
+                    document.getElementById('out-emotion').innerText = Object.keys(p.expressions).reduce((a,b)=>p.expressions[a]>p.expressions[b]?a:b).toUpperCase();
                 }
+
                 requestAnimationFrame(loop);
             };
             loop();
