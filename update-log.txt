@@ -1,3 +1,22 @@
+--- DARKFOX AI - SYSTEM UPDATE LOG [2026.03.19] ---
+> VERSION: 5.8 "ULTIMATE PRODUCTION"
+> STATUS: OPERATIONAL
+
+[NEW FEATURES]
+- ID TRACKER: Fixed target ID jitter. Each face now maintains a persistent ID (#001, #002).
+- TARGET COUNTER: Corrected real-time count for multiple entities.
+- BUG SYSTEM: Web3Forms activated with Key: c387b391-5ee4-4fa0-98d6-2617c48f38f5.
+- LABEL SYNC: ID tags now correctly align in mirror-mode.
+
+[FIXES]
+- REDIRECT: Confirmed zero-redirect policy for bug submissions.
+- SCROLL: Update log now features vertical scroll support for long histories.
+
+[SYSTEM NOTES]
+- Live at: https://slabylol.github.io/AIFaceScanner/.
+- 250 report requests available per month.
+--------------------------------------------------
+
 --- DARKFOX AI - SYSTEM UPDATE LOG [2026.03.18] ---
 > VERSION: 5.6 "FULL INTEGRATION"
 > STATUS: DEPLOYMENT READY
