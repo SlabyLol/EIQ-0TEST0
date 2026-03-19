@@ -1,4 +1,21 @@
 --- DARKFOX AI - SYSTEM UPDATE LOG [2026-03-19] ---
+> VERSION: 6.7 "OMEGA BUILD"
+> STATUS: FULLY OPERATIONAL (ENGLISH)
+
+[NEW FEATURES]
+- CONNECTED 3D MESH: Landmarks are now linked by vector paths (jaw, eyebrows, nose, eyes, mouth) for a skeletal digital look.
+- UI REFINEMENT: Increased viewport padding, added border-accents to badges, and improved terminal readability.
+- GLOBAL LOCALIZATION: Full English language support across all modules.
+
+[ENGINE UPDATES]
+- RENDER PIPELINE: Switched to a dual-pass rendering method (Path-Stroke then Point-Fill) for the Mesh to ensure maximum visibility.
+- ERROR HANDLING: Added fallback placeholder for the boot logo and refined directory warnings in the console.
+
+[SYSTEM NOTES]
+- V.6.7 is now the stable baseline for international deployment.
+--------------------------------------------------
+
+--- DARKFOX AI - SYSTEM UPDATE LOG [2026-03-19] ---
 > VERSION: 6.7 "GLOBAL KERNEL EDITION"
 > STATUS: FULLY OPERATIONAL (ENGLISH)
 
